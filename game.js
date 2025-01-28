@@ -10,11 +10,15 @@ const config = {
   scene: {
     preload: preload,
     create: create,
+    update: update,
     resize: resize
   },
 };
 
 const game = new Phaser.Game(config);
+
+let goldCounter = 0;
+let goldText;
 
 function preload() {
   console.log('Preloading assets...');
@@ -87,6 +91,25 @@ function create() {
       }
     });
   });
+
+  // Agregar el contador de monedas de oro
+  goldText = this.add.text(this.sys.game.config.width - 20, 20, `Gold: ${goldCounter}`, { font: '20px Arial', fill: '#fff' });
+  goldText.setOrigin(1, 0); // Alinear el texto a la derecha
+
+  // Incrementar el contador de monedas de oro cada segundo
+  this.time.addEvent({
+    delay: 1000,
+    callback: () => {
+      goldCounter += 1;
+      goldText.setText(`Gold: ${goldCounter}`);
+    },
+    loop: true
+  });
+}
+
+function update() {
+  // Actualizar la posición del contador de monedas de oro para que siempre esté en la esquina superior derecha
+  goldText.setPosition(this.sys.game.config.width - 20, 20);
 }
 
 function resize(gameSize) {
