@@ -1,18 +1,22 @@
-let goldCounter = 60; // Inicializar con 60 monedas
+import setup from './setup.json';
+
+export let goldCounter = setup.initialGold; // Inicializar con el oro inicial del archivo de configuración
 let goldText;
 let goldIncrement = 1;
+const objectPositions = [];
 
 export function initializeGold(scene) {
   // Agregar el contador de monedas de oro
   goldText = scene.add.text(scene.sys.game.config.width - 20, 20, `Gold: ${goldCounter}`, { font: '20px Arial', fill: '#fff' });
   goldText.setOrigin(1, 0); // Alinear el texto a la derecha
 
-  // Incrementar el contador de monedas de oro cada dos segundos
+  // Incrementar el contador de monedas de oro cada intervalo configurado
   scene.time.addEvent({
-    delay: 2000, // Cambiar a 2000 ms (2 segundos)
+    delay: setup.goldIncrementInterval, // Usar el intervalo del archivo de configuración
     callback: () => {
       goldCounter += goldIncrement;
       goldText.setText(`Gold: ${goldCounter}`);
+      objectPositions.forEach(pos => showIncrement(scene, pos));
     },
     loop: true
   });
@@ -24,7 +28,7 @@ export function updateGoldTextPosition(scene) {
 }
 
 export function decreaseGold(scene, pos, amount) {
-  // Mostrar -20 en rojo y restar 20 al contador de oro
+  // Mostrar - en rojo y restar al contador de oro
   const minusText = scene.add.text(pos.x, pos.y, `-${amount}`, { font: '20px Arial', fill: '#ff0000' });
   scene.tweens.add({
     targets: minusText,
@@ -36,7 +40,7 @@ export function decreaseGold(scene, pos, amount) {
       minusText.destroy();
     }
   });
-  goldCounter -= amount;
+  goldCounter = Math.max(0, goldCounter - amount); // Evitar que el oro sea negativo
   goldText.setText(`Gold: ${goldCounter}`);
 }
 
@@ -56,8 +60,14 @@ export function showRedX(scene, pos) {
 }
 
 export function increaseGold(scene, pos, amount) {
-  // Mostrar +5 en verde y aumentar el incremento de oro
-  const plusText = scene.add.text(pos.x, pos.y, `+${amount}`, { font: '20px Arial', fill: '#00ff00' });
+  // Aumentar el incremento de oro y agregar la posición del objeto
+  goldIncrement += amount;
+  objectPositions.push(pos);
+}
+
+function showIncrement(scene, pos) {
+  // Mostrar + en verde en la casilla del objeto cada intervalo configurado
+  const plusText = scene.add.text(pos.x, pos.y, `+${setup.objectCellGain}`, { font: '20px Arial', fill: '#00ff00' });
   scene.tweens.add({
     targets: plusText,
     y: pos.y - 50,
@@ -68,5 +78,4 @@ export function increaseGold(scene, pos, amount) {
       plusText.destroy();
     }
   });
-  goldIncrement += amount;
 }

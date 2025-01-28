@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { createHexagonBackground, placeObjects } from './hex-background';
-import { initializeGold, updateGoldTextPosition, decreaseGold, showRedX, increaseGold } from './gold';
+import { initializeGold, updateGoldTextPosition, decreaseGold, showRedX, increaseGold, goldCounter } from './gold';
+import setup from './setup.json';
 import assetsList from './assetsList.json';
 
 const config = {
@@ -17,8 +18,6 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-
-let goldCounter = 60;
 
 function preload() {
   console.log('Preloading assets...');
@@ -84,20 +83,20 @@ function create() {
 
     coinIcon.on('pointerdown', () => {
       if (objectPositions.some(objectPos => objectPos.x === pos.x && objectPos.y === pos.y)) {
-        if (goldCounter >= 20) {
+        if (goldCounter >= setup.objectCellCost) {
           coinIcon.destroy(); // Eliminar el icono de monedas
           const objectKey = assetsList[Math.floor(Math.random() * assetsList.length)].split('/').pop().replace(/\.(png|jpe?g|svg)$/, '');
           const object = this.add.image(pos.x, pos.y, objectKey);
           object.setScale(0.5); // Ajustar el tamaño del objeto
-          decreaseGold(this, pos, 20);
-          increaseGold(this, pos, 5);
+          decreaseGold(this, pos, setup.objectCellCost);
+          increaseGold(this, pos, setup.objectCellGain);
         } else {
           showRedX(this, pos);
         }
       } else {
-        if (goldCounter >= 1) {
+        if (goldCounter >= setup.emptyCellCost) {
           coinIcon.destroy(); // Eliminar el icono de monedas
-          decreaseGold(this, pos, 1);
+          decreaseGold(this, pos, setup.emptyCellCost);
         } else {
           showRedX(this, pos);
         }
