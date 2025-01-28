@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { createHexagonBackground, placeObjects } from './hex-background';
+import { initializeGold, updateGoldTextPosition, decreaseGold } from './gold';
 import assetsList from './assetsList.json';
 
 const config = {
@@ -16,9 +17,6 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-
-let goldCounter = 0;
-let goldText;
 
 function preload() {
   console.log('Preloading assets...');
@@ -88,28 +86,19 @@ function create() {
         const objectKey = assetsList[Math.floor(Math.random() * assetsList.length)].split('/').pop().replace(/\.(png|jpe?g|svg)$/, '');
         const object = this.add.image(pos.x, pos.y, objectKey);
         object.setScale(0.5); // Ajustar el tamaño del objeto
+      } else {
+        decreaseGold(this, pos);
       }
     });
   });
 
-  // Agregar el contador de monedas de oro
-  goldText = this.add.text(this.sys.game.config.width - 20, 20, `Gold: ${goldCounter}`, { font: '20px Arial', fill: '#fff' });
-  goldText.setOrigin(1, 0); // Alinear el texto a la derecha
-
-  // Incrementar el contador de monedas de oro cada segundo
-  this.time.addEvent({
-    delay: 1000,
-    callback: () => {
-      goldCounter += 1;
-      goldText.setText(`Gold: ${goldCounter}`);
-    },
-    loop: true
-  });
+  // Inicializar el contador de monedas de oro
+  initializeGold(this);
 }
 
 function update() {
   // Actualizar la posición del contador de monedas de oro para que siempre esté en la esquina superior derecha
-  goldText.setPosition(this.sys.game.config.width - 20, 20);
+  updateGoldTextPosition(this);
 }
 
 function resize(gameSize) {
