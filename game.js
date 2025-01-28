@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { createHexagonBackground, placeObjects } from './hex-background';
-import { initializeGold, updateGoldTextPosition, decreaseGold } from './gold';
+import { initializeGold, updateGoldTextPosition, decreaseGold, showRedX, increaseGold } from './gold';
 import assetsList from './assetsList.json';
 
 const config = {
@@ -17,6 +17,8 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+let goldCounter = 60;
 
 function preload() {
   console.log('Preloading assets...');
@@ -81,13 +83,24 @@ function create() {
     coinIcon.setScale(0.25); // Ajustar el tamaño del icono de monedas
 
     coinIcon.on('pointerdown', () => {
-      coinIcon.destroy(); // Eliminar el icono de monedas
       if (objectPositions.some(objectPos => objectPos.x === pos.x && objectPos.y === pos.y)) {
-        const objectKey = assetsList[Math.floor(Math.random() * assetsList.length)].split('/').pop().replace(/\.(png|jpe?g|svg)$/, '');
-        const object = this.add.image(pos.x, pos.y, objectKey);
-        object.setScale(0.5); // Ajustar el tamaño del objeto
+        if (goldCounter >= 20) {
+          coinIcon.destroy(); // Eliminar el icono de monedas
+          const objectKey = assetsList[Math.floor(Math.random() * assetsList.length)].split('/').pop().replace(/\.(png|jpe?g|svg)$/, '');
+          const object = this.add.image(pos.x, pos.y, objectKey);
+          object.setScale(0.5); // Ajustar el tamaño del objeto
+          decreaseGold(this, pos, 20);
+          increaseGold(this, pos, 5);
+        } else {
+          showRedX(this, pos);
+        }
       } else {
-        decreaseGold(this, pos);
+        if (goldCounter >= 1) {
+          coinIcon.destroy(); // Eliminar el icono de monedas
+          decreaseGold(this, pos, 1);
+        } else {
+          showRedX(this, pos);
+        }
       }
     });
   });
