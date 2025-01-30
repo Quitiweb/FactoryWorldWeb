@@ -1,7 +1,7 @@
 {
-  "goldIncrementInterval": 5000,
+  "goldIncrementInterval": 4000,
   "initialGold": 20,
   "emptyCellCost": 1,
   "objectCellCost": 20,
-  "objectCellGain": 2
+  "objectCellGain": 3
 }
