@@ -1,5 +1,4 @@
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
@@ -40,16 +39,6 @@ module.exports = (env, argv) => {
     resolve: {
       extensions: ['.js', '.ts'],
     },
-    plugins: [
-      new HtmlWebpackPlugin({
-        template: './index.html',
-        filename: 'index.html',
-        favicon: './assets/favicon.ico', // Asegúrate de tener un favicon en esta ruta
-        inject: 'body',
-        scriptLoading: 'blocking',
-        minify: isProduction,
-      }),
-    ],
     optimization: {
       splitChunks: {
         chunks: 'all',
