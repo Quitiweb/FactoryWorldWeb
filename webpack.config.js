@@ -6,6 +6,7 @@ module.exports = {
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
+    publicPath: '', // Asegúrate de que el publicPath esté configurado correctamente
   },
   module: {
     rules: [
@@ -40,7 +41,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './index.html',
       filename: 'index.html',
-      favicon: './assets/favicon.ico' // Asegúrate de tener un favicon en esta ruta
-    })
-  ]
+      favicon: './assets/favicon.ico', // Asegúrate de tener un favicon en esta ruta
+    }),
+  ],
 };
