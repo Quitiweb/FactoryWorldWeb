@@ -8,28 +8,28 @@ module.exports = {
   },
   module: {
     rules: [
-    {
+      {
         test: /\.js$/,
         exclude: /node_modules/,
         use: {
-        loader: 'babel-loader',
+          loader: 'babel-loader',
         },
-    },
-    {
+      },
+      {
         test: /\.ts$/,
         exclude: /node_modules/,
         use: 'ts-loader',
-    },
-    {
+      },
+      {
         test: /\.png$/,
         use: {
-        loader: 'file-loader',
-        options: {
+          loader: 'file-loader',
+          options: {
             name: '[name].[ext]',
-            outputPath: 'images/'
-        }
-        }
-    },
+            outputPath: 'images/',
+          },
+        },
+      },
     ],
   },
   resolve: {
