@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { createHexagonBackground, placeObjects } from './hex-background';
 import { initializeGold, updateGoldTextPosition, decreaseGold, showRedX, increaseGold, goldCounter } from './gold';
 import setup from './setup.json';
@@ -15,6 +16,8 @@ const config = {
     resize: resize
   },
 };
+
+const game = new Phaser.Game(config);
 
 function preload() {
   console.log('Preloading assets...');
@@ -116,8 +119,3 @@ function resize(gameSize) {
   if (height === undefined) { height = this.sys.game.config.height; }
   this.cameras.resize(width, height);
 }
-
-// Importar Phaser dinámicamente
-import('phaser').then(Phaser => {
-  const game = new Phaser.Game(config);
-});
