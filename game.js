@@ -6,8 +6,8 @@ import assetsList from './assetsList.json';
 
 const config = {
   type: Phaser.AUTO,
-  width: 1200, // Aumentar el ancho del lienzo
-  height: 900, // Aumentar la altura del lienzo
+  width: 1600, // Aumentar el ancho del lienzo
+  height: 1300, // Aumentar la altura del lienzo
   backgroundColor: '#87CEEB', // Color azul del océano
   scene: {
     preload: preload,
@@ -18,6 +18,9 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+const ZOOM_MIN = 0.5;
+const ZOOM_MAX = 2;
 
 function preload() {
   console.log('Preloading assets...');
@@ -108,6 +111,12 @@ function create() {
   this.input.on('pointerdown', startDrag, this);
   this.input.on('pointerup', stopDrag, this);
   this.input.on('pointermove', doDrag, this);
+
+  // Habilitar el zoom con la rueda del ratón
+  this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+    const newZoom = Phaser.Math.Clamp(this.cameras.main.zoom - deltaY * 0.001, ZOOM_MIN, ZOOM_MAX);
+    this.cameras.main.setZoom(newZoom);
+  });
 
   // Inicializar el contador de monedas de oro
   initializeGold(this);
