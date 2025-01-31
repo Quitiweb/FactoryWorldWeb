@@ -30,5 +30,3 @@ jobs:
         branch: gh-pages
         folder: dist
         token: ${{ secrets.GH_TOKEN }}
-        publish_dir: ./dist
-        cname: game.quitiweb.com
