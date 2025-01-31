@@ -53,7 +53,11 @@ function preload() {
 
 function create() {
   console.log('Creating scene...');
-  this.add.text(10, 10, '¡Bienvenido a Factory World!', { font: '20px Arial', fill: '#fff' });
+  const titleText = this.add.text(this.cameras.main.width / 2, 20, '¡Bienvenido a Factory World!', { 
+    font: '24px Arial', fill: '#fff' 
+  });
+  titleText.setOrigin(0.5, 0); // Centrar el texto horizontalmente
+  titleText.setScrollFactor(0); // Hace que el texto permanezca fijo
 
   const hexPositions = createHexagonBackground(this, 10, 10);
   const objectPositions = placeObjects(this, hexPositions, 15); // Colocar objetos solo en 15 hexágonos aleatorios
@@ -64,8 +68,9 @@ function create() {
 
   // Agregar el icono del altavoz
   let isMusicOn = true;
-  const speakerIcon = this.add.image(50, this.sys.game.config.height - 100, 'speakerOff').setInteractive();
-  speakerIcon.setScale(0.25); // Reducir el tamaño del icono a la mitad
+  const speakerIcon = this.add.image(50, 50, 'speakerOff').setInteractive();
+  speakerIcon.setScale(0.25);
+  speakerIcon.setScrollFactor(0); // Fijar en la pantalla
 
   speakerIcon.on('pointerdown', () => {
     isMusicOn = !isMusicOn;

@@ -7,8 +7,11 @@ const objectPositions = [];
 
 export function initializeGold(scene) {
   // Agregar el contador de monedas de oro
-  goldText = scene.add.text(scene.sys.game.config.width - 20, 20, `Gold: ${goldCounter}`, { font: '20px Arial', fill: '#fff' });
-  goldText.setOrigin(1, 0); // Alinear el texto a la derecha
+  goldText = scene.add.text(scene.cameras.main.width - 20, 20, `Gold: ${goldCounter}`, { 
+    font: '20px Arial', fill: '#fff' 
+  });
+  goldText.setOrigin(1, 0); // Alinear a la derecha
+  goldText.setScrollFactor(0); // Fijar en pantalla
 
   // Incrementar el contador de monedas de oro cada intervalo configurado
   scene.time.addEvent({
