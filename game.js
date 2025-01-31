@@ -104,8 +104,37 @@ function create() {
     });
   });
 
+  // Habilitar la funcionalidad de arrastre
+  this.input.on('pointerdown', startDrag, this);
+  this.input.on('pointerup', stopDrag, this);
+  this.input.on('pointermove', doDrag, this);
+
   // Inicializar el contador de monedas de oro
   initializeGold(this);
+}
+
+let isDragging = false;
+let dragStartX, dragStartY;
+
+function startDrag(pointer) {
+  isDragging = true;
+  dragStartX = pointer.x;
+  dragStartY = pointer.y;
+}
+
+function stopDrag() {
+  isDragging = false;
+}
+
+function doDrag(pointer) {
+  if (isDragging) {
+    const dragX = pointer.x - dragStartX;
+    const dragY = pointer.y - dragStartY;
+    this.cameras.main.scrollX -= dragX;
+    this.cameras.main.scrollY -= dragY;
+    dragStartX = pointer.x;
+    dragStartY = pointer.y;
+  }
 }
 
 function update() {
