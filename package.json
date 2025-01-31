@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "serve -s .",
-    "build": "webpack --mode development",
+    "start": "npm run build:dev && serve -s dist",
+    "build:dev": "webpack --mode development --output-path dist",
+    "build:prod": "webpack --mode production --output-path dist",
     "serve": "serve -s dist",
     "test": "echo \"Error: no test specified\" && exit 1",
     "list-assets": "node listAssets.js"
