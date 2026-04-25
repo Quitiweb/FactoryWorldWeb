@@ -50,7 +50,7 @@
             </div>
           </div>
           <div class="legend">
-            <span class="tag">🧙 tú</span><span class="tag">👾 enemigo</span><span class="tag">🗝 llave</span><span class="tag">🚪 salida</span><span class="tag">🧪 poción</span><span class="tag">⬛ muro</span>
+            <span class="tag">🧙 tú</span><span class="tag">🟢 slime</span><span class="tag">💀 esqueleto</span><span class="tag">👹 bruto</span><span class="tag">🗝 llave</span><span class="tag">🚪 salida</span><span class="tag">🧪 poción</span><span class="tag">⬛ muro</span>
           </div>
         </aside>
         <section>
@@ -62,6 +62,11 @@
 
   <script>
     const SIZE = 7;
+    const ENEMY_TYPES = {
+      slime: { glyph: '🟢', name: 'slime', hp: floor => 1 + Math.floor(floor / 4), damage: 1, chaseBias: 0.45 },
+      skeleton: { glyph: '💀', name: 'esqueleto', hp: floor => 2 + Math.floor(floor / 4), damage: 1, chaseBias: 0.7 },
+      brute: { glyph: '👹', name: 'bruto', hp: floor => 3 + Math.floor(floor / 3), damage: 2, chaseBias: 0.9 },
+    };
     const boardEl = document.getElementById('board');
     const logEl = document.getElementById('log');
     const hpEl = document.getElementById('hp');
@@ -74,10 +79,15 @@
     let state;
 
     function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-    function clonePos(p){ return {x:p.x,y:p.y}; }
     function eq(a,b){ return a.x===b.x && a.y===b.y; }
     function inside(x,y){ return x>=0 && y>=0 && x<SIZE && y<SIZE; }
     function keyOf(p){ return `${p.x},${p.y}`; }
+    function describeEnemy(enemy){ return ENEMY_TYPES[enemy.type].name; }
+    function pickEnemyType(floor){
+      if (floor >= 5 && Math.random() < 0.28) return 'brute';
+      if (floor >= 2 && Math.random() < 0.45) return 'skeleton';
+      return 'slime';
+    }
 
     function randomFloorPos(blocked = new Set()) {
       let p;
@@ -135,7 +145,8 @@
       const enemyCount = Math.min(2 + state.floor, 6);
       for (let i=0;i<enemyCount;i++) {
         const pos = randomFloorPos(new Set([keyOf(state.player), keyOf(state.keyPos), keyOf(state.exitPos), ...state.enemies.map(keyOf)]));
-        state.enemies.push({ ...pos, hp: 1 + Math.floor(state.floor/3) });
+        const type = pickEnemyType(state.floor);
+        state.enemies.push({ ...pos, type, hp: ENEMY_TYPES[type].hp(state.floor) });
       }
       state.potionPos = Math.random() < 0.75 ? randomFloorPos(new Set([keyOf(state.player), keyOf(state.keyPos), keyOf(state.exitPos), ...state.enemies.map(keyOf)])) : null;
       if (resetKey) state.player = { x: 0, y: 0 };
@@ -164,10 +175,17 @@
           const pos = {x,y};
           if (state.walls.has(keyOf(pos))) { cls='wall'; glyph=''; }
           else if (eq(state.player,pos)) { cls='player'; glyph='🧙'; }
-          else if (state.enemies.some(e=>eq(e,pos))) { cls='enemy'; glyph='👾'; }
-          else if (!state.hasKey && eq(state.keyPos,pos)) { cls='key'; glyph='🗝'; }
-          else if (eq(state.exitPos,pos)) { cls='exit'; glyph='🚪'; }
-          else if (state.potionPos && eq(state.potionPos,pos)) { cls='potion'; glyph='🧪'; }
+          else {
+            const enemy = state.enemies.find(e=>eq(e,pos));
+            if (enemy) { cls='enemy'; glyph=ENEMY_TYPES[enemy.type].glyph; }
+            else if (!state.hasKey && eq(state.keyPos,pos)) { cls='key'; glyph='🗝'; }
+            else if (eq(state.exitPos,pos)) { cls='exit'; glyph='🚪'; }
+            else if (state.potionPos && eq(state.potionPos,pos)) { cls='potion'; glyph='🧪'; }
+          }
+          if (!glyph && cls==='floor') glyph='';
+          if (!glyph && cls==='key') glyph='🗝';
+          if (!glyph && cls==='exit') glyph='🚪';
+          if (!glyph && cls==='potion') glyph='🧪';
           cell.className = `cell ${cls}`;
           cell.textContent = glyph;
           cell.addEventListener('click', ()=> attemptTapMove(pos));
@@ -188,9 +206,9 @@
       enemy.hp -= state.attack;
       if (enemy.hp <= 0) {
         state.enemies = state.enemies.filter(e => e !== enemy);
-        log('Derrotas a un enemigo.');
+        log(`Derrotas al ${describeEnemy(enemy)}.`);
       } else {
-        log('Golpeas al enemigo, pero sigue en pie.');
+        log(`Golpeas al ${describeEnemy(enemy)}, pero sigue en pie.`);
       }
     }
 
@@ -226,11 +244,15 @@
     }
 
     function enemyTurn() {
+      let latestEvent = '';
       for (const enemy of [...state.enemies]) {
         const dx = state.player.x - enemy.x;
         const dy = state.player.y - enemy.y;
-        if (Math.abs(dx) + Math.abs(dy) === 1) {
-          state.hp -= 1;
+        const distance = Math.abs(dx) + Math.abs(dy);
+        const enemyDef = ENEMY_TYPES[enemy.type];
+        if (distance === 1) {
+          state.hp -= enemyDef.damage;
+          latestEvent = `El ${enemyDef.name} te golpea por ${enemyDef.damage}.`;
           if (state.hp <= 0) {
             state.hp = 0;
             state.over = true;
@@ -238,17 +260,20 @@
             render();
             return;
           }
-          log('Un enemigo te golpea.');
           continue;
         }
         const options = [];
-        if (dx !== 0) options.push({ x: enemy.x + Math.sign(dx), y: enemy.y });
-        if (dy !== 0) options.push({ x: enemy.x, y: enemy.y + Math.sign(dy) });
+        if (Math.random() < enemyDef.chaseBias) {
+          if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) options.push({ x: enemy.x + Math.sign(dx), y: enemy.y });
+          if (dy !== 0) options.push({ x: enemy.x, y: enemy.y + Math.sign(dy) });
+          if (Math.abs(dx) < Math.abs(dy) && dx !== 0) options.push({ x: enemy.x + Math.sign(dx), y: enemy.y });
+        }
         options.push({ x: enemy.x + (Math.random()<0.5?1:-1), y: enemy.y });
         options.push({ x: enemy.x, y: enemy.y + (Math.random()<0.5?1:-1) });
         const next = options.find(p => inside(p.x,p.y) && !state.walls.has(keyOf(p)) && !state.enemies.some(e => e !== enemy && eq(e,p)) && !eq(state.player,p) && (!state.potionPos || !eq(state.potionPos,p)) && !eq(state.exitPos,p) && (!state.keyPos || !eq(state.keyPos,p)));
         if (next) { enemy.x = next.x; enemy.y = next.y; }
       }
+      if (latestEvent) log(latestEvent);
     }
 
     function takeTurn(dir) {
