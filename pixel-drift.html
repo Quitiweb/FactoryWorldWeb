@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pixel Drift · Game Quitiweb</title>
+  <link rel="icon" href="./favicon.ico">
+  <style>
+    :root{--bg:#070b16;--panel:#11192e;--line:#2c416d;--text:#eef6ff;--muted:#9fb2d7;--accent:#22d3ee;--accent2:#8b5cf6;--good:#34d399;--gold:#fbbf24;--bad:#fb7185}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at top,#172a4d,#070b16 65%);color:var(--text);min-height:100vh;padding:16px}
+    .wrap{max-width:1180px;margin:0 auto}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.back{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#0f1730;color:#fff;text-decoration:none}.layout{display:grid;grid-template-columns:1fr 320px;gap:16px}.card{background:linear-gradient(180deg,#13203b,#0f1730);border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:0 16px 34px rgba(0,0,0,.25)}
+    h1{margin:.15em 0}.muted{color:var(--muted)}
+    .game-shell{position:relative}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}.pill{background:#0b1428;border:1px solid #2a4068;border-radius:14px;padding:10px}.pill strong{display:block;font-size:1.35rem}.canvas-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid #22375e;background:#050814}.overlay{position:absolute;inset:0;pointer-events:none}.message{position:absolute;left:16px;bottom:16px;max-width:60%;padding:10px 12px;border-radius:12px;background:rgba(8,13,26,.62);backdrop-filter:blur(6px);color:#dce8ff;font-size:.95rem}
+    canvas{display:block;width:100%;height:auto;touch-action:none;background:linear-gradient(180deg,#081120,#050814)}
+    .side{display:grid;gap:12px}.log,.mode,.controls,.scores{background:#0b1428;border:1px solid #2a4068;border-radius:16px;padding:14px}.log{min-height:116px;line-height:1.55}.buttons{display:grid;gap:8px}.btn{padding:13px 14px;border:none;border-radius:14px;background:linear-gradient(90deg,var(--accent2),var(--accent));color:#06111c;font-weight:800;cursor:pointer}.btn.alt{background:#10192f;color:#eef6ff;border:1px solid #31456f}.toggle{display:flex;gap:8px;flex-wrap:wrap}.toggle button{flex:1}.touches{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.touch{padding:16px;border-radius:14px;border:1px solid #31456f;background:#0f1730;color:#eef6ff;text-align:center;font-weight:800;user-select:none}
+    ul{margin:.4em 0 0 1.1em;padding:0}.score-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #22375e}.score-line:last-child{border-bottom:0}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}.touches{display:grid}.message{max-width:82%}}
+    @media(max-width:640px){body{padding:10px}.card{padding:12px;border-radius:18px}.hud{grid-template-columns:repeat(2,1fr)}.message{font-size:.9rem;left:10px;right:10px;max-width:none}.top{margin-bottom:10px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="./index.html">← Galería</a>
+      <div class="muted">Arcade de derrape · reto diario</div>
+    </div>
+    <div class="layout">
+      <section class="card game-shell">
+        <h1>Pixel Drift</h1>
+        <p class="muted">Derrapa, enlaza curvas y entra en trance. Aguanta en la carretera, encadena combos y supera tu mejor vuelta diaria.</p>
+        <div class="hud">
+          <div class="pill"><span class="muted">Puntos</span><strong id="score">0</strong></div>
+          <div class="pill"><span class="muted">Combo</span><strong id="combo">x1.0</strong></div>
+          <div class="pill"><span class="muted">Velocidad</span><strong id="speed">0</strong></div>
+          <div class="pill"><span class="muted">Integridad</span><strong id="health">100%</strong></div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="game" width="900" height="560"></canvas>
+          <div class="overlay">
+            <div class="message" id="message">Modo diario: la carretera cambia cada día. Pulsa jugar y déjate llevar.</div>
+          </div>
+        </div>
+        <div class="touches">
+          <div class="touch" id="touchLeft">← IZQUIERDA</div>
+          <div class="touch" id="touchRight">DERECHA →</div>
+        </div>
+      </section>
+      <aside class="side">
+        <div class="mode">
+          <strong>Modo</strong>
+          <div class="toggle" style="margin-top:10px">
+            <button class="btn" id="dailyBtn">Reto diario</button>
+            <button class="btn alt" id="endlessBtn">Endless</button>
+          </div>
+          <div class="buttons" style="margin-top:10px">
+            <button class="btn" id="startBtn">Jugar</button>
+            <button class="btn alt" id="restartBtn">Reiniciar run</button>
+          </div>
+        </div>
+        <div class="scores">
+          <strong>Mejores marcas</strong>
+          <div class="score-line"><span>Diaria</span><strong id="bestDaily">0</strong></div>
+          <div class="score-line"><span>Endless</span><strong id="bestEndless">0</strong></div>
+          <div class="score-line"><span>Racha actual</span><strong id="bestCombo">x1.0</strong></div>
+        </div>
+        <div class="log">
+          <strong>Cómo se juega</strong>
+          <ul>
+            <li>Mantén izquierda o derecha para preparar el derrape.</li>
+            <li>Cuanto más tiempo sobrevivas enlazando curvas, más sube el combo.</li>
+            <li>Si sales demasiado de la carretera, pierdes integridad.</li>
+            <li>El reto diario usa una semilla basada en la fecha.</li>
+          </ul>
+        </div>
+        <div class="controls">
+          <strong>Sensación buscada</strong>
+          <p class="muted">Quería que tuviera algo hipnótico: colores nocturnos, curvas que parecen música y esa sensación de “una partida más” para mejorar la marca.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const ui = {
+      score: document.getElementById('score'), combo: document.getElementById('combo'), speed: document.getElementById('speed'), health: document.getElementById('health'),
+      message: document.getElementById('message'), bestDaily: document.getElementById('bestDaily'), bestEndless: document.getElementById('bestEndless'), bestCombo: document.getElementById('bestCombo')
+    };
+
+    let mode = 'daily';
+    let input = { left:false, right:false };
+    let running = false;
+    let seedBase = 1;
+    let road = [];
+    let particles = [];
+    let collectibles = [];
+    let distance = 0;
+    let lastTs = 0;
+    let state;
+
+    function hashString(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h,16777619);} return h>>>0; }
+    function makeRng(seed){ let a=seed>>>0; return ()=>((a = (a + 0x6D2B79F5) | 0), (((a ^ a>>>15) * (1 | a)) ^ (((a ^ a>>>7) * (61 | a)) + a)) ^ a) >>> 0 / 4294967296; }
+    function fmt(n){ return Math.round(n).toLocaleString('es-ES'); }
+    function localKey(name){ return `pixelDrift:${name}`; }
+
+    function updateBestUI(){
+      ui.bestDaily.textContent = fmt(Number(localStorage.getItem(localKey('bestDaily')) || 0));
+      ui.bestEndless.textContent = fmt(Number(localStorage.getItem(localKey('bestEndless')) || 0));
+      ui.bestCombo.textContent = 'x' + Number(localStorage.getItem(localKey('bestCombo')) || 1).toFixed(1);
+    }
+
+    function setMode(next){
+      mode = next;
+      document.getElementById('dailyBtn').className = next==='daily' ? 'btn' : 'btn alt';
+      document.getElementById('endlessBtn').className = next==='endless' ? 'btn' : 'btn alt';
+      ui.message.textContent = next==='daily' ? 'Modo diario: la carretera cambia cada día. Pulsa jugar y déjate llevar.' : 'Modo endless: carretera infinita y puro score attack.';
+    }
+
+    function initState(){
+      seedBase = mode === 'daily' ? hashString(new Date().toISOString().slice(0,10)) : Math.floor(Math.random()*1e9);
+      const rng = makeRng(seedBase);
+      road = [];
+      particles = [];
+      collectibles = [];
+      distance = 0;
+      state = {
+        rng,
+        carX: canvas.width * 0.5,
+        carVX: 0,
+        speed: 220,
+        maxSpeed: 410,
+        score: 0,
+        combo: 1,
+        bestComboRun: 1,
+        health: 100,
+        roadWidth: window.innerWidth < 640 ? 170 : 220,
+        driftHeat: 0,
+        moodHue: Math.floor(rng()*360),
+        started: false,
+        gameOver: false,
+      };
+      let center = canvas.width * 0.5;
+      let curve = 0;
+      for(let y=-120; y<canvas.height+900; y+=32){
+        curve += (rng()-0.5) * 24;
+        curve *= 0.92;
+        center += curve;
+        center = Math.max(170, Math.min(canvas.width-170, center));
+        road.push({ y, center, width: state.roadWidth + (rng()-0.5)*20 });
+      }
+      spawnCollectibles(18);
+      updateHud();
+      render(true);
+    }
+
+    function spawnCollectibles(targetCount){
+      while(collectibles.length < targetCount){
+        const segment = road[Math.floor(state.rng() * Math.max(12, road.length-6)) + 4];
+        collectibles.push({ x: segment.center + (state.rng()-0.5)*(segment.width*0.55), y: segment.y, value: 180 + Math.floor(state.rng()*160), taken:false });
+      }
+    }
+
+    function currentRoadCenter(yTarget){
+      for(let i=1;i<road.length;i++){
+        if(road[i].y >= yTarget){
+          const a = road[i-1], b = road[i];
+          const t = (yTarget - a.y) / (b.y - a.y || 1);
+          return { center: a.center + (b.center - a.center)*t, width: a.width + (b.width - a.width)*t };
+        }
+      }
+      const last = road[road.length-1];
+      return { center:last.center, width:last.width };
+    }
+
+    function update(dt){
+      if(!running || state.gameOver) return;
+      state.started = true;
+      distance += state.speed * dt;
+      const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+      const carY = canvas.height * 0.75;
+      const roadHere = currentRoadCenter(carY);
+      const targetCurvature = currentRoadCenter(carY - 80).center - roadHere.center;
+
+      state.carVX += steer * 860 * dt;
+      state.carVX *= input.left || input.right ? 0.965 : 0.92;
+      state.carX += state.carVX * dt;
+      state.carX += targetCurvature * 0.12 * dt;
+      state.speed += (state.maxSpeed - state.speed) * 0.25 * dt;
+
+      const offset = state.carX - roadHere.center;
+      const roadHalf = roadHere.width * 0.5;
+      const slip = Math.abs(state.carVX) + Math.abs(targetCurvature * 2.2);
+      const onRoad = Math.abs(offset) < roadHalf * 0.92;
+      const driftActive = onRoad && slip > 65 && Math.abs(offset) > roadHalf * 0.18;
+
+      if(driftActive){
+        state.combo = Math.min(12, state.combo + dt * 0.8);
+        state.bestComboRun = Math.max(state.bestComboRun, state.combo);
+        state.score += (22 + slip * 0.15) * state.combo * dt;
+        state.driftHeat = Math.min(1, state.driftHeat + dt * 1.2);
+        if(Math.random() < 0.45){ particles.push({ x: state.carX + (Math.random()-0.5)*24, y: carY + 24, vx:(Math.random()-0.5)*20, vy:20+Math.random()*60, life:0.55, color:`hsla(${state.moodHue+30},100%,70%,0.85)`}); }
+      } else {
+        state.combo = Math.max(1, state.combo - dt * 0.9);
+        state.driftHeat = Math.max(0, state.driftHeat - dt * 1.4);
+      }
+
+      if(!onRoad){
+        state.health -= (Math.abs(offset) - roadHalf * 0.7) * 0.028 * dt + 5.2 * dt;
+        state.score = Math.max(0, state.score - 16 * dt);
+      } else {
+        state.health = Math.min(100, state.health + dt * 1.7);
+      }
+
+      for(let i=road.length-1;i>=0;i--){
+        road[i].y += state.speed * dt;
+      }
+      while(road[1] && road[1].y > 0){ road.shift(); }
+      while(road[road.length-1].y < canvas.height + 200){
+        const prev = road[road.length-1];
+        let turn = (state.rng()-0.5) * 80;
+        turn += Math.sin((distance + prev.y) * 0.0024 + seedBase % 360) * 24;
+        const center = Math.max(150, Math.min(canvas.width-150, prev.center + turn * 0.18));
+        road.push({ y: prev.y + 32, center, width: state.roadWidth + (state.rng()-0.5)*22 });
+      }
+
+      collectibles.forEach(c => c.y += state.speed * dt);
+      collectibles = collectibles.filter(c => c.y < canvas.height + 80 && !c.taken);
+      spawnCollectibles(18);
+      collectibles.forEach(c => {
+        const dx = c.x - state.carX;
+        const dy = c.y - carY;
+        if(dx*dx + dy*dy < 900){
+          c.taken = true;
+          state.score += c.value * state.combo;
+          ui.message.textContent = `Eco recogido: +${fmt(c.value)} · combo x${state.combo.toFixed(1)}`;
+        }
+      });
+
+      particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+      particles = particles.filter(p => p.life > 0);
+
+      if(state.health <= 0){
+        state.health = 0;
+        state.gameOver = true;
+        running = false;
+        saveScores();
+        ui.message.textContent = `Fin de la run. Puntuación: ${fmt(state.score)} · combo máx x${state.bestComboRun.toFixed(1)}. Vuelve a entrar, que engancha.`;
+      }
+      updateHud();
+      render();
+    }
+
+    function saveScores(){
+      const bestKey = mode === 'daily' ? 'bestDaily' : 'bestEndless';
+      const current = Number(localStorage.getItem(localKey(bestKey)) || 0);
+      if(state.score > current) localStorage.setItem(localKey(bestKey), Math.round(state.score));
+      const comboBest = Number(localStorage.getItem(localKey('bestCombo')) || 1);
+      if(state.bestComboRun > comboBest) localStorage.setItem(localKey('bestCombo'), state.bestComboRun.toFixed(1));
+      updateBestUI();
+    }
+
+    function updateHud(){
+      ui.score.textContent = fmt(state.score);
+      ui.combo.textContent = 'x' + state.combo.toFixed(1);
+      ui.speed.textContent = Math.round(state.speed);
+      ui.health.textContent = Math.max(0, Math.round(state.health)) + '%';
+    }
+
+    function drawRoad(){
+      ctx.save();
+      ctx.fillStyle = '#050814';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      const gradient = ctx.createLinearGradient(0,0,0,canvas.height);
+      gradient.addColorStop(0, `hsla(${state.moodHue},70%,18%,1)`);
+      gradient.addColorStop(1, '#040814');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      ctx.beginPath();
+      for(let i=0;i<road.length;i++){
+        const seg = road[i];
+        const left = seg.center - seg.width * 0.5;
+        if(i===0) ctx.moveTo(left, seg.y); else ctx.lineTo(left, seg.y);
+      }
+      for(let i=road.length-1;i>=0;i--){
+        const seg = road[i];
+        const right = seg.center + seg.width * 0.5;
+        ctx.lineTo(right, seg.y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#161e31';
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      road.forEach((seg, i) => { if(i===0) ctx.moveTo(seg.center, seg.y); else ctx.lineTo(seg.center, seg.y); });
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(110,231,255,.24)';
+      ctx.lineWidth = 3;
+      road.forEach(seg => {
+        ctx.beginPath();
+        ctx.moveTo(seg.center - seg.width*0.5, seg.y);
+        ctx.lineTo(seg.center - seg.width*0.5 + 26, seg.y);
+        ctx.moveTo(seg.center + seg.width*0.5, seg.y);
+        ctx.lineTo(seg.center + seg.width*0.5 - 26, seg.y);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function drawCollectibles(){
+      collectibles.forEach(c => {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate((distance + c.x) * 0.01);
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        for(let i=0;i<4;i++){
+          const a = i * Math.PI/2;
+          const r = i % 2 === 0 ? 12 : 6;
+          const x = Math.cos(a)*r, y=Math.sin(a)*r;
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function drawParticles(){
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.life * 1.6);
+        ctx.fillRect(p.x, p.y, 4, 4);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function drawCar(){
+      const carY = canvas.height * 0.75;
+      const tilt = Math.max(-0.35, Math.min(0.35, state.carVX / 420));
+      ctx.save();
+      ctx.translate(state.carX, carY);
+      ctx.rotate(tilt);
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fillRect(-16, -28, 32, 56);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-11, -18, 22, 20);
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fillRect(-14, -24, 28, 8);
+      if(state.driftHeat > 0.1){
+        ctx.fillStyle = `rgba(34,211,238,${0.35 + state.driftHeat*0.5})`;
+        ctx.beginPath();
+        ctx.moveTo(-14, 24); ctx.lineTo(-28 - state.driftHeat*20, 40); ctx.lineTo(-6, 32); ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(14, 24); ctx.lineTo(28 + state.driftHeat*20, 40); ctx.lineTo(6, 32); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function render(initial = false){
+      if(!state) return;
+      drawRoad();
+      drawCollectibles();
+      drawParticles();
+      drawCar();
+      if(initial){
+        ctx.fillStyle = 'rgba(5,9,18,.38)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
+    }
+
+    function loop(ts){
+      const dt = Math.min(0.032, (ts - lastTs) / 1000 || 0.016);
+      lastTs = ts;
+      update(dt);
+      requestAnimationFrame(loop);
+    }
+
+    function start(){
+      initState();
+      running = true;
+      lastTs = performance.now();
+      ui.message.textContent = mode==='daily' ? 'Reto diario activo. Las primeras curvas siempre engañan.' : 'Endless activo. Busca el trance perfecto.';
+    }
+
+    document.getElementById('startBtn').addEventListener('click', start);
+    document.getElementById('restartBtn').addEventListener('click', start);
+    document.getElementById('dailyBtn').addEventListener('click', ()=> setMode('daily'));
+    document.getElementById('endlessBtn').addEventListener('click', ()=> setMode('endless'));
+    window.addEventListener('keydown', e => { if(e.key==='ArrowLeft' || e.key==='a') input.left = true; if(e.key==='ArrowRight' || e.key==='d') input.right = true; });
+    window.addEventListener('keyup', e => { if(e.key==='ArrowLeft' || e.key==='a') input.left = false; if(e.key==='ArrowRight' || e.key==='d') input.right = false; });
+    const tl = document.getElementById('touchLeft'), tr = document.getElementById('touchRight');
+    [['pointerdown',true],['pointerup',false],['pointercancel',false],['pointerleave',false]].forEach(([evt,val])=>{
+      tl.addEventListener(evt, e => { e.preventDefault(); input.left = val; if(!val && evt!=='pointerdown') return; });
+      tr.addEventListener(evt, e => { e.preventDefault(); input.right = val; if(!val && evt!=='pointerdown') return; });
+    });
+
+    updateBestUI();
+    setMode('daily');
+    initState();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
