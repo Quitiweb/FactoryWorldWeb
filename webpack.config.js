@@ -31,7 +31,10 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         { from: 'index.html', to: 'index.html' },
+        { from: 'factory-world.html', to: 'factory-world.html' },
+        { from: 'tic-tac-toe.html', to: 'tic-tac-toe.html' },
         { from: 'assets/favicon.ico', to: 'favicon.ico' },
+        { from: 'assets/covers/', to: 'assets/covers/' },
         { from: 'assets/hex-pack/PNG/Objects/', to: 'assets/hex-pack/PNG/Objects/' },
         { from: 'assets/hex-pack/PNG/Tiles/Terrain/Grass/', to: 'assets/hex-pack/PNG/Tiles/Terrain/Grass/' },
         { from: 'assets/icons/', to: 'assets/icons/' },

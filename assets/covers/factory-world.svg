@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop stop-color="#1d4ed8"/><stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="#08111f"/>
+  <rect x="0" y="0" width="800" height="500" fill="url(#g)" opacity=".18"/>
+  <g fill="#7dd3fc" opacity=".7">
+    <polygon points="160,210 220,175 280,210 280,280 220,315 160,280"/>
+    <polygon points="285,210 345,175 405,210 405,280 345,315 285,280"/>
+    <polygon points="410,210 470,175 530,210 530,280 470,315 410,280"/>
+  </g>
+  <g fill="#22c55e">
+    <rect x="206" y="205" width="28" height="55" rx="6"/>
+    <rect x="331" y="195" width="28" height="65" rx="6"/>
+    <rect x="454" y="215" width="34" height="45" rx="6"/>
+  </g>
+  <text x="60" y="92" fill="#eef6ff" font-size="50" font-family="Arial" font-weight="700">Factory World</text>
+  <text x="60" y="132" fill="#b7c8e6" font-size="22" font-family="Arial">Expande la producción sobre un mapa hexagonal</text>
+</svg>
