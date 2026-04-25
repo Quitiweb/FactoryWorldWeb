@@ -1,21 +1,38 @@
 import setup from './setup.json';
 
-export let goldCounter = setup.initialGold; // Inicializar con el oro inicial del archivo de configuración
+export let goldCounter = setup.initialGold;
 let goldText;
 let goldIncrement = 1;
 const objectPositions = [];
 
-export function initializeGold(scene) {
-  // Agregar el contador de monedas de oro
-  goldText = scene.add.text(scene.sys.game.config.width - 20, 20, `Gold: ${goldCounter}`, { font: '20px Arial', fill: '#fff' });
-  goldText.setOrigin(1, 0); // Alinear el texto a la derecha
+function getResponsiveFontSize(scene, desktop = 20, mobile = 18) {
+  return `${scene.scale.width <= 768 ? mobile : desktop}px Arial`;
+}
 
-  // Incrementar el contador de monedas de oro cada intervalo configurado
+function updateGoldText(scene) {
+  if (!goldText) {
+    return;
+  }
+
+  goldText.setText(`Gold: ${goldCounter}`);
+  goldText.setStyle({ font: getResponsiveFontSize(scene, 20, 18) });
+}
+
+export function initializeGold(scene) {
+  goldText = scene.add.text(scene.scale.width - 20, 16, `Gold: ${goldCounter}`, {
+    font: getResponsiveFontSize(scene, 20, 18),
+    fill: '#fff',
+    stroke: '#000000',
+    strokeThickness: 4,
+  });
+  goldText.setOrigin(1, 0);
+  goldText.setDepth(50);
+
   scene.time.addEvent({
-    delay: setup.goldIncrementInterval, // Usar el intervalo del archivo de configuración
+    delay: setup.goldIncrementInterval,
     callback: () => {
       goldCounter += goldIncrement;
-      goldText.setText(`Gold: ${goldCounter}`);
+      updateGoldText(scene);
       objectPositions.forEach(pos => showIncrement(scene, pos));
     },
     loop: true
@@ -23,35 +40,43 @@ export function initializeGold(scene) {
 }
 
 export function updateGoldTextPosition(scene) {
-  // Actualizar la posición del contador de monedas de oro para que siempre esté en la esquina superior derecha
-  goldText.setPosition(scene.sys.game.config.width - 20, 20);
+  if (!goldText) {
+    return;
+  }
+
+  goldText.setPosition(scene.scale.width - 20, 16);
+  updateGoldText(scene);
 }
 
 export function decreaseGold(scene, pos, amount) {
-  // Mostrar - en rojo y restar al contador de oro
-  const minusText = scene.add.text(pos.x, pos.y, `-${amount}`, { font: '20px Arial', fill: '#ff0000' });
+  const minusText = scene.add.text(pos.x, pos.y, `-${amount}`, {
+    font: getResponsiveFontSize(scene, 20, 18),
+    fill: '#ff0000'
+  });
   scene.tweens.add({
     targets: minusText,
     y: pos.y - 50,
     alpha: 0,
-    duration: 3000,
+    duration: 2000,
     ease: 'Power1',
     onComplete: () => {
       minusText.destroy();
     }
   });
-  goldCounter = Math.max(0, goldCounter - amount); // Evitar que el oro sea negativo
-  goldText.setText(`Gold: ${goldCounter}`);
+  goldCounter = Math.max(0, goldCounter - amount);
+  updateGoldText(scene);
 }
 
 export function showRedX(scene, pos) {
-  // Mostrar X en rojo
-  const redXText = scene.add.text(pos.x, pos.y, 'X', { font: '20px Arial', fill: '#ff0000' });
+  const redXText = scene.add.text(pos.x, pos.y, 'X', {
+    font: getResponsiveFontSize(scene, 20, 18),
+    fill: '#ff0000'
+  });
   scene.tweens.add({
     targets: redXText,
     y: pos.y - 50,
     alpha: 0,
-    duration: 3000,
+    duration: 1500,
     ease: 'Power1',
     onComplete: () => {
       redXText.destroy();
@@ -60,19 +85,20 @@ export function showRedX(scene, pos) {
 }
 
 export function increaseGold(scene, pos, amount) {
-  // Aumentar el incremento de oro y agregar la posición del objeto
   goldIncrement += amount;
   objectPositions.push(pos);
 }
 
 function showIncrement(scene, pos) {
-  // Mostrar + en verde en la casilla del objeto cada intervalo configurado
-  const plusText = scene.add.text(pos.x, pos.y, `+${setup.objectCellGain}`, { font: '20px Arial', fill: '#00ff00' });
+  const plusText = scene.add.text(pos.x, pos.y, `+${setup.objectCellGain}`, {
+    font: getResponsiveFontSize(scene, 20, 18),
+    fill: '#00ff00'
+  });
   scene.tweens.add({
     targets: plusText,
     y: pos.y - 50,
     alpha: 0,
-    duration: 3000,
+    duration: 2000,
     ease: 'Power1',
     onComplete: () => {
       plusText.destroy();

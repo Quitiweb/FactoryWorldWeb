@@ -1,24 +1,59 @@
+import Phaser from 'phaser';
 import assetsList from './assetsList.json';
 
 const hexImages = [
-  'grass1', 'grass2', 'grass3',  // Add more hexagon images if available
+  'grass1', 'grass2', 'grass3',
   'grass4', 'grass5', 'grass6', 'grass7', 'grass8', 'grass9'
 ];
 
-// Filtrar los objetos de la lista de assets
 const objectImages = assetsList
   .filter(filePath => filePath.includes('assets/hex-pack/PNG/Objects/'))
   .map(filePath => filePath.split('/').pop().replace(/\.(png|jpe?g|svg)$/, ''));
 
-export function createHexagonBackground(scene, rows, cols) {
-  const hexWidth = 120; // Updated hexagon width
-  const hexHeight = 140; // Updated hexagon height
-  const hexScale = 0.5;
+function getBoardSettings(scene) {
+  const width = scene.scale.width || scene.sys.game.config.width;
+  const height = scene.scale.height || scene.sys.game.config.height;
+  const isMobile = width <= 768;
+
+  const hexWidth = 120;
+  const hexHeight = 140;
+  const uiPaddingX = isMobile ? 20 : 36;
+  const uiPaddingTop = isMobile ? 90 : 80;
+  const uiPaddingBottom = isMobile ? 120 : 80;
+
+  const availableWidth = Math.max(260, width - uiPaddingX * 2);
+  const availableHeight = Math.max(260, height - uiPaddingTop - uiPaddingBottom);
+
+  const cols = isMobile ? 5 : 10;
+  const rows = isMobile ? 7 : 10;
+
+  const scaleX = availableWidth / (cols * hexWidth);
+  const scaleY = availableHeight / (rows * hexHeight * 0.75 + hexHeight * 0.25);
+  const hexScale = Phaser.Math.Clamp(Math.min(scaleX, scaleY), isMobile ? 0.42 : 0.48, isMobile ? 0.72 : 0.62);
+
+  return {
+    width,
+    height,
+    cols,
+    rows,
+    hexScale,
+    hexWidth,
+    hexHeight,
+    uiPaddingTop,
+    uiPaddingBottom,
+  };
+}
+
+export function createHexagonBackground(scene) {
+  const { width, height, cols, rows, hexScale, hexWidth, hexHeight, uiPaddingTop, uiPaddingBottom } = getBoardSettings(scene);
   const scaledHexWidth = hexWidth * hexScale;
   const scaledHexHeight = hexHeight * hexScale;
+  const totalBoardWidth = cols * scaledHexWidth + scaledHexWidth / 2;
+  const totalBoardHeight = rows * (scaledHexHeight * 0.75) + scaledHexHeight * 0.25;
+  const offsetX = (width - totalBoardWidth) / 2 + scaledHexWidth / 2;
+  const verticalSpace = height - uiPaddingTop - uiPaddingBottom;
+  const offsetY = uiPaddingTop + Math.max(0, (verticalSpace - totalBoardHeight) / 2) + scaledHexHeight / 2;
   const hexPositions = [];
-  const offsetX = (scene.sys.game.config.width - (cols * scaledHexWidth)) / 2;
-  const offsetY = (scene.sys.game.config.height - (rows * scaledHexHeight * 0.75)) / 2;
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -30,24 +65,19 @@ export function createHexagonBackground(scene, rows, cols) {
     }
   }
 
-  return hexPositions;
+  return { hexPositions, hexScale };
 }
 
 function addHexagon(scene, x, y, key, scale) {
-  const hex = scene.add.image(x, y, key);
-  hex.setScale(scale);
-  console.log(`Hex added at (${x}, ${y}) with key ${key}`);
+  scene.add.image(x, y, key).setScale(scale);
 }
 
-export function placeObjects(scene, hexPositions, numObjects) {
-  const hexScale = 0.5;
-  const selectedPositions = Phaser.Utils.Array.Shuffle(hexPositions).slice(0, numObjects);
+export function placeObjects(scene, hexPositions, numObjects, objectScale = 0.5) {
+  const selectedPositions = Phaser.Utils.Array.Shuffle([...hexPositions]).slice(0, numObjects);
 
   selectedPositions.forEach(pos => {
     const key = objectImages[Math.floor(Math.random() * objectImages.length)];
-    const object = scene.add.image(pos.x, pos.y, key);
-    object.setScale(hexScale);
-    console.log(`${key} added at (${pos.x}, ${pos.y})`);
+    scene.add.image(pos.x, pos.y, key).setScale(objectScale);
   });
 
   return selectedPositions;

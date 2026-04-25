@@ -4,11 +4,29 @@ import { initializeGold, updateGoldTextPosition, decreaseGold, showRedX, increas
 import setup from './setup.json';
 import assetsList from './assetsList.json';
 
+function getViewportSize() {
+  const width = window.innerWidth || 1200;
+  const height = window.innerHeight || 900;
+
+  return {
+    width: Phaser.Math.Clamp(width, 360, 1440),
+    height: Phaser.Math.Clamp(height, 640, 1024),
+  };
+}
+
+const initialViewport = getViewportSize();
+
 const config = {
   type: Phaser.AUTO,
-  width: 1200, // Aumentar el ancho del lienzo
-  height: 900, // Aumentar la altura del lienzo
-  backgroundColor: '#87CEEB', // Color azul del océano
+  width: initialViewport.width,
+  height: initialViewport.height,
+  backgroundColor: '#87CEEB',
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    width: initialViewport.width,
+    height: initialViewport.height,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
   scene: {
     preload: preload,
     create: create,
@@ -50,19 +68,31 @@ function preload() {
 
 function create() {
   console.log('Creating scene...');
-  this.add.text(10, 10, '¡Bienvenido a Factory World!', { font: '20px Arial', fill: '#fff' });
+  const isMobile = this.scale.width <= 768;
+  const title = this.add.text(16, 16, '¡Bienvenido a Factory World!', {
+    font: `${isMobile ? 18 : 22}px Arial`,
+    fill: '#fff',
+    stroke: '#000000',
+    strokeThickness: 4,
+  });
+  title.setDepth(50);
 
-  const hexPositions = createHexagonBackground(this, 10, 10);
-  const objectPositions = placeObjects(this, hexPositions, 15); // Colocar objetos solo en 15 hexágonos aleatorios
+  const { hexPositions, hexScale } = createHexagonBackground(this);
+  const objectScale = Math.max(0.42, hexScale);
+  const initialObjects = Math.max(6, Math.round(hexPositions.length * 0.15));
+  const objectPositions = placeObjects(this, hexPositions, initialObjects, objectScale);
 
-  // Reproducir la música de fondo
-  const music = this.sound.add('backgroundMusic');
-  music.play({ loop: true });
+  const existingMusic = this.sound.get('backgroundMusic');
+  const music = existingMusic || this.sound.add('backgroundMusic');
+  if (!music.isPlaying) {
+    music.play({ loop: true, volume: 0.45 });
+  }
 
-  // Agregar el icono del altavoz
-  let isMusicOn = true;
-  const speakerIcon = this.add.image(50, this.sys.game.config.height - 100, 'speakerOff').setInteractive();
-  speakerIcon.setScale(0.25); // Reducir el tamaño del icono a la mitad
+  let isMusicOn = !music.mute;
+  const speakerIcon = this.add.image(50, this.scale.height - 60, isMusicOn ? 'speakerOff' : 'speakerOn');
+  speakerIcon.setScale(isMobile ? 0.34 : 0.28);
+  speakerIcon.setDepth(50);
+  speakerIcon.setInteractive(new Phaser.Geom.Circle(0, 0, 80), Phaser.Geom.Circle.Contains);
 
   speakerIcon.on('pointerdown', () => {
     isMusicOn = !isMusicOn;
@@ -70,41 +100,42 @@ function create() {
     speakerIcon.setTexture(isMusicOn ? 'speakerOff' : 'speakerOn');
   });
 
-  // Hacer que el icono flote siempre en la esquina inferior izquierda
   this.scale.on('resize', (gameSize) => {
-    const { width, height } = gameSize;
-    speakerIcon.setPosition(50, height - 100);
+    const width = gameSize.width || this.scale.width;
+    const height = gameSize.height || this.scale.height;
+    title.setStyle({ font: `${width <= 768 ? 18 : 22}px Arial` });
+    speakerIcon.setScale(width <= 768 ? 0.34 : 0.28);
+    speakerIcon.setPosition(50, height - 60);
   });
 
-  // Mostrar iconos de monedas sobre todos los hexágonos
+  const coinScale = Math.max(isMobile ? 0.28 : 0.24, hexScale * 0.55);
+
   hexPositions.forEach(pos => {
-    const coinIcon = this.add.image(pos.x, pos.y, 'coins').setInteractive();
-    coinIcon.setScale(0.25); // Ajustar el tamaño del icono de monedas
+    const coinIcon = this.add.image(pos.x, pos.y, 'coins');
+    coinIcon.setScale(coinScale);
+    coinIcon.setDepth(20);
+    coinIcon.setInteractive(new Phaser.Geom.Circle(0, 0, 44), Phaser.Geom.Circle.Contains);
 
     coinIcon.on('pointerdown', () => {
       if (objectPositions.some(objectPos => objectPos.x === pos.x && objectPos.y === pos.y)) {
         if (goldCounter >= setup.objectCellCost) {
-          coinIcon.destroy(); // Eliminar el icono de monedas
+          coinIcon.destroy();
           const objectKey = assetsList[Math.floor(Math.random() * assetsList.length)].split('/').pop().replace(/\.(png|jpe?g|svg)$/, '');
-          const object = this.add.image(pos.x, pos.y, objectKey);
-          object.setScale(0.5); // Ajustar el tamaño del objeto
+          this.add.image(pos.x, pos.y, objectKey).setScale(objectScale);
           decreaseGold(this, pos, setup.objectCellCost);
           increaseGold(this, pos, setup.objectCellGain);
         } else {
           showRedX(this, pos);
         }
+      } else if (goldCounter >= setup.emptyCellCost) {
+        coinIcon.destroy();
+        decreaseGold(this, pos, setup.emptyCellCost);
       } else {
-        if (goldCounter >= setup.emptyCellCost) {
-          coinIcon.destroy(); // Eliminar el icono de monedas
-          decreaseGold(this, pos, setup.emptyCellCost);
-        } else {
-          showRedX(this, pos);
-        }
+        showRedX(this, pos);
       }
     });
   });
 
-  // Inicializar el contador de monedas de oro
   initializeGold(this);
 }
 
@@ -114,8 +145,7 @@ function update() {
 }
 
 function resize(gameSize) {
-  const { width, height } = gameSize;
-  if (width === undefined) { width = this.sys.game.config.width; }
-  if (height === undefined) { height = this.sys.game.config.height; }
+  const width = gameSize?.width || this.scale.width || this.sys.game.config.width;
+  const height = gameSize?.height || this.scale.height || this.sys.game.config.height;
   this.cameras.resize(width, height);
 }
