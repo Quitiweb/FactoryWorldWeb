@@ -4,6 +4,10 @@ import { initializeGold, updateGoldTextPosition, decreaseGold, showRedX, increas
 import setup from './setup.json';
 import assetsList from './assetsList.json';
 
+const buildableAssetKeys = assetsList
+  .filter(filePath => filePath.includes('assets/hex-pack/PNG/Objects/'))
+  .map(filePath => filePath.split('/').pop().replace(/\.(png|jpe?g|svg)$/, ''));
+
 function getViewportSize() {
   const width = window.innerWidth || 1200;
   const height = window.innerHeight || 900;
@@ -80,7 +84,8 @@ function create() {
   const { hexPositions, hexScale } = createHexagonBackground(this);
   const objectScale = Math.max(0.42, hexScale);
   const initialObjects = Math.max(6, Math.round(hexPositions.length * 0.15));
-  const objectPositions = placeObjects(this, hexPositions, initialObjects, objectScale);
+  const resourcePositions = placeObjects(this, hexPositions, initialObjects, objectScale);
+  const resourcePositionSet = new Set(resourcePositions.map(pos => `${pos.x}:${pos.y}`));
 
   const existingMusic = this.sound.get('backgroundMusic');
   const music = existingMusic || this.sound.add('backgroundMusic');
@@ -108,30 +113,87 @@ function create() {
     speakerIcon.setPosition(50, height - 60);
   });
 
-  const coinScale = Math.max(isMobile ? 0.28 : 0.24, hexScale * 0.55);
+  const coinScale = Math.max(isMobile ? 0.3 : 0.24, hexScale * 0.58);
+  const hitRadius = isMobile ? 54 : 42;
+  const costFontSize = isMobile ? 16 : 14;
+
+  const createTapFeedback = (pos, text, fill = '#ffffff') => {
+    const hint = this.add.text(pos.x, pos.y + 26, text, {
+      font: `${costFontSize}px Arial`,
+      fill,
+      stroke: '#000000',
+      strokeThickness: 4,
+    });
+    hint.setOrigin(0.5);
+    hint.setDepth(60);
+    this.tweens.add({
+      targets: hint,
+      y: pos.y - 8,
+      alpha: 0,
+      duration: 900,
+      ease: 'Power2',
+      onComplete: () => hint.destroy(),
+    });
+  };
 
   hexPositions.forEach(pos => {
+    const key = `${pos.x}:${pos.y}`;
+    const isResourceCell = resourcePositionSet.has(key);
+    const cellCost = isResourceCell ? setup.objectCellCost : setup.emptyCellCost;
+
     const coinIcon = this.add.image(pos.x, pos.y, 'coins');
     coinIcon.setScale(coinScale);
     coinIcon.setDepth(20);
-    coinIcon.setInteractive(new Phaser.Geom.Circle(0, 0, 44), Phaser.Geom.Circle.Contains);
 
-    coinIcon.on('pointerdown', () => {
-      if (objectPositions.some(objectPos => objectPos.x === pos.x && objectPos.y === pos.y)) {
-        if (goldCounter >= setup.objectCellCost) {
-          coinIcon.destroy();
-          const objectKey = assetsList[Math.floor(Math.random() * assetsList.length)].split('/').pop().replace(/\.(png|jpe?g|svg)$/, '');
-          this.add.image(pos.x, pos.y, objectKey).setScale(objectScale);
-          decreaseGold(this, pos, setup.objectCellCost);
-          increaseGold(this, pos, setup.objectCellGain);
-        } else {
-          showRedX(this, pos);
-        }
-      } else if (goldCounter >= setup.emptyCellCost) {
-        coinIcon.destroy();
-        decreaseGold(this, pos, setup.emptyCellCost);
-      } else {
+    const costLabel = this.add.text(pos.x, pos.y + (isMobile ? 22 : 18), `${cellCost}`, {
+      font: `${costFontSize}px Arial`,
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 4,
+    });
+    costLabel.setOrigin(0.5);
+    costLabel.setDepth(25);
+
+    const hitArea = this.add.zone(pos.x, pos.y, hitRadius * 2, hitRadius * 2);
+    hitArea.setDepth(30);
+    hitArea.setInteractive({ useHandCursor: true });
+
+    const pressTargets = [coinIcon, costLabel];
+    let activated = false;
+
+    hitArea.on('pointerdown', () => {
+      if (activated) {
+        return;
+      }
+
+      this.tweens.add({
+        targets: pressTargets,
+        scaleX: 0.92,
+        scaleY: 0.92,
+        duration: 70,
+        yoyo: true,
+      });
+
+      if (goldCounter < cellCost) {
         showRedX(this, pos);
+        createTapFeedback(pos, `Faltan ${cellCost - goldCounter}`, '#ffb3b3');
+        return;
+      }
+
+      activated = true;
+      hitArea.disableInteractive();
+      coinIcon.destroy();
+      costLabel.destroy();
+      hitArea.destroy();
+
+      if (isResourceCell) {
+        const objectKey = buildableAssetKeys[Math.floor(Math.random() * buildableAssetKeys.length)];
+        this.add.image(pos.x, pos.y, objectKey).setScale(objectScale);
+        decreaseGold(this, pos, setup.objectCellCost);
+        increaseGold(this, pos, setup.objectCellGain);
+        createTapFeedback(pos, `+${setup.objectCellGain}/tick`, '#9cff9c');
+      } else {
+        decreaseGold(this, pos, setup.emptyCellCost);
       }
     });
   });
