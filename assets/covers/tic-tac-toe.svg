@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+  <rect width="800" height="500" fill="#08111f"/>
+  <rect width="800" height="500" fill="url(#g)" opacity=".18"/>
+  <g stroke="#dbeafe" stroke-width="14" stroke-linecap="round">
+    <line x1="300" y1="140" x2="300" y2="360"/><line x1="500" y1="140" x2="500" y2="360"/>
+    <line x1="200" y1="213" x2="600" y2="213"/><line x1="200" y1="287" x2="600" y2="287"/>
+  </g>
+  <g stroke-width="14" fill="none">
+    <circle cx="250" cy="176" r="34" stroke="#34d399"/>
+    <path d="M432 146l56 56M488 146l-56 56" stroke="#f97316" stroke-linecap="round"/>
+    <path d="M232 250l56 56M288 250l-56 56" stroke="#f97316" stroke-linecap="round"/>
+    <circle cx="550" cy="324" r="34" stroke="#34d399"/>
+  </g>
+  <text x="60" y="92" fill="#eef6ff" font-size="50" font-family="Arial" font-weight="700">Tic Tac Toe</text>
+  <text x="60" y="132" fill="#b7c8e6" font-size="22" font-family="Arial">Humano vs máquina</text>
+</svg>

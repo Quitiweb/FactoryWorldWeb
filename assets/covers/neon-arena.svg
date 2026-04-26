@@ -1,0 +1,33 @@
+<svg width="1280" height="800" viewBox="0 0 1280 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="800" fill="#050814"/>
+  <rect width="1280" height="800" fill="url(#bg)"/>
+  <g opacity="0.35" stroke="#3DD9FF">
+    <path d="M220 170L640 80L1060 170L1160 400L1060 630L640 720L220 630L120 400L220 170Z"/>
+    <path d="M320 230L640 160L960 230L1030 400L960 570L640 640L320 570L250 400L320 230Z"/>
+    <path d="M420 290L640 240L860 290L910 400L860 510L640 560L420 510L370 400L420 290Z"/>
+  </g>
+  <g filter="url(#glow)">
+    <circle cx="640" cy="400" r="92" fill="#67E8F9" fill-opacity="0.12"/>
+    <circle cx="640" cy="400" r="28" fill="#67E8F9"/>
+    <circle cx="846" cy="286" r="18" fill="#F472B6"/>
+    <circle cx="902" cy="488" r="22" fill="#FACC15"/>
+    <circle cx="408" cy="516" r="18" fill="#A78BFA"/>
+    <circle cx="358" cy="318" r="16" fill="#22D3EE"/>
+  </g>
+  <g opacity="0.75">
+    <path d="M640 212L790 290L790 448L640 526L490 448L490 290L640 212Z" stroke="#8B5CF6" stroke-width="6"/>
+    <path d="M640 168L848 280L848 520L640 632L432 520L432 280L640 168Z" stroke="#22D3EE" stroke-width="4" stroke-dasharray="12 12"/>
+  </g>
+  <text x="122" y="638" fill="#EEF6FF" font-family="system-ui, sans-serif" font-size="88" font-weight="800">Neon Arena</text>
+  <text x="126" y="700" fill="#A7BAE0" font-family="system-ui, sans-serif" font-size="34" font-weight="500">survivor arcade · oleadas · build en run</text>
+  <defs>
+    <linearGradient id="bg" x1="640" y1="0" x2="640" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18214A"/>
+      <stop offset="1" stop-color="#050814"/>
+    </linearGradient>
+    <filter id="glow" x="302" y="152" width="656" height="432" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="22" result="blur"/>
+      <feBlend in="SourceGraphic" in2="blur"/>
+    </filter>
+  </defs>
+</svg>

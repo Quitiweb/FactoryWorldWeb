@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game Quitiweb</title>
+  <link rel="icon" href="./favicon.ico">
+  <style>
+    :root{--bg:#07111f;--panel:#0f1b30;--panel2:#132340;--line:#28416f;--text:#edf4ff;--muted:#9db3d7;--accent:#6ee7ff;--accent2:#8b5cf6}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at top,#172b4d,#07111f 65%);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:28px 18px 60px}.hero{margin-bottom:24px}.hero h1{font-size:clamp(2rem,4vw,3.6rem);margin:.2em 0}.hero p{max-width:760px;color:var(--muted);line-height:1.6}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.25)}
+    .card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#0a1528}.body{padding:18px}.body h2{margin:0 0 8px;font-size:1.35rem}.body p{margin:0;color:var(--muted);line-height:1.55;min-height:70px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.tag{font-size:.85rem;padding:7px 10px;border-radius:999px;background:#0c1730;border:1px solid #294270;color:#c8d6f3}.actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px}.btn{display:inline-block;padding:11px 14px;border-radius:12px;background:linear-gradient(90deg,var(--accent2),var(--accent));color:#06111c;text-decoration:none;font-weight:700}.mutebtn{padding:10px 12px;border-radius:12px;border:1px solid var(--line);color:var(--muted);text-decoration:none}.soon{display:inline-block;padding:7px 10px;border-radius:999px;background:#3a2b12;color:#ffd18a;border:1px solid #7a5a24;font-size:.85rem;font-weight:700}
+    footer{margin-top:28px;color:var(--muted);font-size:.95rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="soon">Game Quitiweb · galería</div>
+      <h1>Juegos de Quitiweb</h1>
+      <p>Este dominio ya es una pequeña galería jugable. A <strong>Factory World</strong>, <strong>Tic Tac Toe</strong>, <strong>Dungeon Sprint</strong> y <strong>Pixel Drift</strong> ahora se les suma <strong>Neon Arena</strong>: una arena neon de supervivencia rápida, pensada también para móvil.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <img src="./assets/covers/factory-world.svg" alt="Factory World">
+        <div class="body">
+          <h2>Factory World</h2>
+          <p>Mini-juego de expansión sobre casillas hexagonales. Gastas oro, activas casillas y haces crecer la producción.</p>
+          <div class="meta"><span class="tag">Phaser</span><span class="tag">Estrategia ligera</span><span class="tag">Móvil</span></div>
+          <div class="actions"><a class="btn" href="./factory-world.html">Jugar</a><span class="mutebtn">Ya disponible</span></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <img src="./assets/covers/tic-tac-toe.svg" alt="Tic Tac Toe">
+        <div class="body">
+          <h2>Tic Tac Toe</h2>
+          <p>Tres en raya clásico: humano contra máquina. Rápido, limpio y perfecto para echar una partida desde el móvil.</p>
+          <div class="meta"><span class="tag">IA básica</span><span class="tag">Arcade</span><span class="tag">1 jugador</span></div>
+          <div class="actions"><a class="btn" href="./tic-tac-toe.html">Jugar</a><span class="mutebtn">Nuevo</span></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <img src="./assets/covers/placeholder-1.svg" alt="Dungeon Sprint">
+        <div class="body">
+          <h2>Dungeon Sprint</h2>
+          <p>Roguelite táctico ligero: recoge la llave, alcanza la salida y mejora tu personaje planta a planta sin morir en el intento.</p>
+          <div class="meta"><span class="tag">Roguelite</span><span class="tag">Turnos</span><span class="tag">Móvil</span></div>
+          <div class="actions"><a class="btn" href="./dungeon-sprint.html">Jugar</a><span class="mutebtn">Nuevo</span></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <img src="./assets/covers/placeholder-2.svg" alt="Pixel Drift">
+        <div class="body">
+          <h2>Pixel Drift</h2>
+          <p>Arcade nocturno de derrape: curva tras curva, combo tras combo. Tiene reto diario y una energía muy de “una partida más”.</p>
+          <div class="meta"><span class="tag">Arcade</span><span class="tag">Drift</span><span class="tag">Daily run</span></div>
+          <div class="actions"><a class="btn" href="./pixel-drift.html">Jugar</a><span class="mutebtn">Nuevo</span></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <img src="./assets/covers/neon-arena.svg" alt="Neon Arena">
+        <div class="body">
+          <h2>Neon Arena</h2>
+          <p>Survivor arcade de arena: sobrevives a oleadas, recoges prismas, subes de nivel y montas tu build en plena partida.</p>
+          <div class="meta"><span class="tag">Survivor</span><span class="tag">Arcade</span><span class="tag">Móvil</span></div>
+          <div class="actions"><a class="btn" href="./neon-arena.html">Jugar</a><span class="mutebtn">Nuevo</span></div>
+        </div>
+      </article>
+    </section>
+
+    <footer>La idea es que este dominio se convierta en un pequeño catálogo jugable. Cuando quieras, añadimos más fichas y más minijuegos.</footer>
+  </div>
+</body>
+</html>

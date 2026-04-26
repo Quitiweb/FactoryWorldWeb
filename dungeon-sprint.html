@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dungeon Sprint · Game Quitiweb</title>
+  <link rel="icon" href="./favicon.ico">
+  <style>
+    :root{--bg:#0a1020;--panel:#121a31;--line:#31456f;--text:#eef5ff;--muted:#9fb2d7;--accent:#8b5cf6;--accent2:#22d3ee;--good:#34d399;--bad:#fb7185;--gold:#fbbf24}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at top,#1d2a4d,#0a1020 65%);color:var(--text);min-height:100vh;padding:18px}
+    .wrap{max-width:980px;margin:0 auto}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.back{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#0f1730;color:#fff;text-decoration:none}.card{background:linear-gradient(180deg,#13203b,#0f1730);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:0 16px 34px rgba(0,0,0,.25)}
+    h1{margin:.2em 0 .1em}.muted{color:var(--muted)}
+    .layout{display:grid;grid-template-columns:320px 1fr;gap:18px}.stats{display:grid;gap:12px}.pillrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.pill{background:#0b1428;border:1px solid #2a4068;border-radius:14px;padding:12px}.pill strong{display:block;font-size:1.3rem}.log{background:#0b1428;border:1px solid #2a4068;border-radius:14px;padding:14px;min-height:118px;line-height:1.55}.board{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:6px}.cell{aspect-ratio:1;border-radius:16px;border:1px solid #2b416b;background:#10192f;display:grid;place-items:center;font-size:clamp(1.1rem,3vw,1.65rem);font-weight:800;user-select:none}.wall{background:#27344f}.floor{background:#111b31}.player{background:#193860;color:#fff;box-shadow:inset 0 0 0 2px #68e0ff}.enemy{background:#3d1a33;color:#ffd3e0}.potion{background:#17372f;color:#9af0ca}.key{background:#403211;color:#ffe082}.exit{background:#251a4a;color:#d8b4fe}.controls{display:grid;gap:8px;margin-top:16px}.dpad{display:grid;grid-template-columns:repeat(3,72px);gap:8px;justify-content:center}.btn{border:none;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07111f;font-weight:800;padding:14px 16px;cursor:pointer}.btn.alt{background:#0b1428;color:#eef5ff;border:1px solid #31456f}.btn.sm{padding:12px}.center{opacity:0;pointer-events:none}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.tag{padding:8px 10px;border-radius:999px;background:#0b1428;border:1px solid #2a4068;color:#d9e4ff;font-size:.9rem}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}.dpad{grid-template-columns:repeat(3,1fr);max-width:260px;margin:0 auto}.board{gap:6px}.cell{border-radius:12px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="./index.html">← Galería</a>
+      <div class="muted">Roguelite ligero · móvil y escritorio</div>
+    </div>
+    <div class="card">
+      <h1>Dungeon Sprint</h1>
+      <p class="muted">Baja planta a planta, recoge la llave y alcanza la salida. Cada planta te da una mejora aleatoria. Si te matan, vuelta a empezar.</p>
+      <div class="layout">
+        <aside class="stats">
+          <div class="pillrow">
+            <div class="pill"><span class="muted">Vida</span><strong id="hp">6/6</strong></div>
+            <div class="pill"><span class="muted">Planta</span><strong id="floor">1</strong></div>
+            <div class="pill"><span class="muted">Ataque</span><strong id="atk">1</strong></div>
+          </div>
+          <div class="pillrow">
+            <div class="pill"><span class="muted">Llave</span><strong id="key">No</strong></div>
+            <div class="pill"><span class="muted">Enemigos</span><strong id="enemies">0</strong></div>
+            <div class="pill"><span class="muted">Pociones</span><strong id="potions">0</strong></div>
+          </div>
+          <div class="log" id="log">Empiezas la incursión. Busca la llave y llega a la salida.</div>
+          <div class="controls">
+            <button class="btn" id="restartBtn">Nueva run</button>
+            <button class="btn alt" id="healBtn">Usar poción</button>
+            <div class="dpad">
+              <button class="btn sm" data-dir="up">↑</button>
+              <button class="center"></button>
+              <button class="btn sm" data-dir="right">→</button>
+              <button class="btn sm" data-dir="left">←</button>
+              <button class="btn sm alt" id="waitBtn">Esperar</button>
+              <button class="btn sm" data-dir="down">↓</button>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="tag">🧙 tú</span><span class="tag">🟢 slime</span><span class="tag">💀 esqueleto</span><span class="tag">👹 bruto</span><span class="tag">🗝 llave</span><span class="tag">🚪 salida</span><span class="tag">🧪 poción</span><span class="tag">⬛ muro</span>
+          </div>
+        </aside>
+        <section>
+          <div class="board" id="board"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SIZE = 7;
+    const ENEMY_TYPES = {
+      slime: { glyph: '🟢', name: 'slime', hp: floor => 1 + Math.floor(floor / 4), damage: 1, chaseBias: 0.45 },
+      skeleton: { glyph: '💀', name: 'esqueleto', hp: floor => 2 + Math.floor(floor / 4), damage: 1, chaseBias: 0.7 },
+      brute: { glyph: '👹', name: 'bruto', hp: floor => 3 + Math.floor(floor / 3), damage: 2, chaseBias: 0.9 },
+    };
+    const boardEl = document.getElementById('board');
+    const logEl = document.getElementById('log');
+    const hpEl = document.getElementById('hp');
+    const floorEl = document.getElementById('floor');
+    const atkEl = document.getElementById('atk');
+    const keyEl = document.getElementById('key');
+    const enemiesEl = document.getElementById('enemies');
+    const potionsEl = document.getElementById('potions');
+
+    let state;
+
+    function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function eq(a,b){ return a.x===b.x && a.y===b.y; }
+    function inside(x,y){ return x>=0 && y>=0 && x<SIZE && y<SIZE; }
+    function keyOf(p){ return `${p.x},${p.y}`; }
+    function describeEnemy(enemy){ return ENEMY_TYPES[enemy.type].name; }
+    function pickEnemyType(floor){
+      if (floor >= 5 && Math.random() < 0.28) return 'brute';
+      if (floor >= 2 && Math.random() < 0.45) return 'skeleton';
+      return 'slime';
+    }
+
+    function randomFloorPos(blocked = new Set()) {
+      let p;
+      do { p = { x: Math.floor(Math.random()*SIZE), y: Math.floor(Math.random()*SIZE) }; } while (blocked.has(keyOf(p)) || state.walls.has(keyOf(p)));
+      return p;
+    }
+
+    function makeWalls(density) {
+      const walls = new Set();
+      for (let i=0;i<SIZE*SIZE*density;i++) {
+        const p = { x: Math.floor(Math.random()*SIZE), y: Math.floor(Math.random()*SIZE) };
+        walls.add(keyOf(p));
+      }
+      return walls;
+    }
+
+    function ensurePath() {
+      const start = state.player;
+      const targets = [state.keyPos, state.exitPos];
+      for (const t of targets) {
+        let x = start.x, y = start.y;
+        while (x !== t.x) { x += Math.sign(t.x - x); state.walls.delete(`${x},${y}`); }
+        while (y !== t.y) { y += Math.sign(t.y - y); state.walls.delete(`${x},${y}`); }
+      }
+    }
+
+    function initRun() {
+      state = {
+        floor: 1,
+        hp: 6,
+        maxHp: 6,
+        attack: 1,
+        potions: 1,
+        hasKey: false,
+        player: { x: 0, y: 0 },
+        enemies: [],
+        walls: new Set(),
+        keyPos: null,
+        exitPos: null,
+        over: false,
+      };
+      generateFloor(true);
+      log('Empiezas la incursión. Busca la llave y llega a la salida.');
+    }
+
+    function generateFloor(resetKey = false) {
+      state.hasKey = false;
+      state.walls = makeWalls(Math.min(0.15 + state.floor*0.015, 0.24));
+      state.walls.delete(keyOf(state.player));
+      const blocked = new Set([keyOf(state.player)]);
+      state.keyPos = randomFloorPos(blocked); blocked.add(keyOf(state.keyPos));
+      state.exitPos = randomFloorPos(blocked); blocked.add(keyOf(state.exitPos));
+      ensurePath();
+      state.enemies = [];
+      const enemyCount = Math.min(2 + state.floor, 6);
+      for (let i=0;i<enemyCount;i++) {
+        const pos = randomFloorPos(new Set([keyOf(state.player), keyOf(state.keyPos), keyOf(state.exitPos), ...state.enemies.map(keyOf)]));
+        const type = pickEnemyType(state.floor);
+        state.enemies.push({ ...pos, type, hp: ENEMY_TYPES[type].hp(state.floor) });
+      }
+      state.potionPos = Math.random() < 0.75 ? randomFloorPos(new Set([keyOf(state.player), keyOf(state.keyPos), keyOf(state.exitPos), ...state.enemies.map(keyOf)])) : null;
+      if (resetKey) state.player = { x: 0, y: 0 };
+      state.walls.delete(keyOf(state.player));
+      updateUI();
+      render();
+    }
+
+    function updateUI() {
+      hpEl.textContent = `${state.hp}/${state.maxHp}`;
+      floorEl.textContent = state.floor;
+      atkEl.textContent = state.attack;
+      keyEl.textContent = state.hasKey ? 'Sí' : 'No';
+      enemiesEl.textContent = state.enemies.length;
+      potionsEl.textContent = state.potions;
+    }
+
+    function log(text) { logEl.textContent = text; updateUI(); }
+
+    function render() {
+      boardEl.innerHTML = '';
+      for (let y=0;y<SIZE;y++) {
+        for (let x=0;x<SIZE;x++) {
+          const cell = document.createElement('div');
+          let cls='floor', glyph='';
+          const pos = {x,y};
+          if (state.walls.has(keyOf(pos))) { cls='wall'; glyph=''; }
+          else if (eq(state.player,pos)) { cls='player'; glyph='🧙'; }
+          else {
+            const enemy = state.enemies.find(e=>eq(e,pos));
+            if (enemy) { cls='enemy'; glyph=ENEMY_TYPES[enemy.type].glyph; }
+            else if (!state.hasKey && eq(state.keyPos,pos)) { cls='key'; glyph='🗝'; }
+            else if (eq(state.exitPos,pos)) { cls='exit'; glyph='🚪'; }
+            else if (state.potionPos && eq(state.potionPos,pos)) { cls='potion'; glyph='🧪'; }
+          }
+          if (!glyph && cls==='floor') glyph='';
+          if (!glyph && cls==='key') glyph='🗝';
+          if (!glyph && cls==='exit') glyph='🚪';
+          if (!glyph && cls==='potion') glyph='🧪';
+          cell.className = `cell ${cls}`;
+          cell.textContent = glyph;
+          cell.addEventListener('click', ()=> attemptTapMove(pos));
+          boardEl.appendChild(cell);
+        }
+      }
+    }
+
+    function attemptTapMove(target) {
+      if (state.over) return;
+      const dx = target.x - state.player.x;
+      const dy = target.y - state.player.y;
+      if (Math.abs(dx) + Math.abs(dy) !== 1) return;
+      takeTurn({ x: Math.sign(dx), y: Math.sign(dy) });
+    }
+
+    function attackEnemy(enemy) {
+      enemy.hp -= state.attack;
+      if (enemy.hp <= 0) {
+        state.enemies = state.enemies.filter(e => e !== enemy);
+        log(`Derrotas al ${describeEnemy(enemy)}.`);
+      } else {
+        log(`Golpeas al ${describeEnemy(enemy)}, pero sigue en pie.`);
+      }
+    }
+
+    function movePlayer(dir) {
+      const next = { x: state.player.x + dir.x, y: state.player.y + dir.y };
+      if (!inside(next.x,next.y) || state.walls.has(keyOf(next))) { log('Te estampas contra un muro.'); return false; }
+      const enemy = state.enemies.find(e => eq(e,next));
+      if (enemy) { attackEnemy(enemy); return true; }
+      state.player = next;
+      if (!state.hasKey && eq(state.player, state.keyPos)) { state.hasKey = true; log('Recoges la llave. Ahora busca la salida.'); }
+      if (state.potionPos && eq(state.player, state.potionPos)) { state.potions += 1; state.potionPos = null; log('Encuentras una poción.'); }
+      if (eq(state.player, state.exitPos)) {
+        if (state.hasKey) {
+          state.floor += 1;
+          grantReward();
+          generateFloor();
+          log(`Bajas a la planta ${state.floor}.`);
+          return false;
+        }
+        log('La salida está cerrada. Primero necesitas la llave.');
+      }
+      return true;
+    }
+
+    function grantReward() {
+      const rewards = [
+        () => { state.maxHp += 1; state.hp = Math.min(state.maxHp, state.hp + 1); return 'Subes tu vida máxima en +1.'; },
+        () => { state.attack += 1; return 'Tu ataque sube en +1.'; },
+        () => { state.potions += 1; return 'Ganas una poción extra.'; },
+        () => { state.hp = Math.min(state.maxHp, state.hp + 2); return 'Recuperas 2 de vida.'; },
+      ];
+      log(`Recompensa: ${rand(rewards)()}`);
+    }
+
+    function enemyTurn() {
+      let latestEvent = '';
+      for (const enemy of [...state.enemies]) {
+        const dx = state.player.x - enemy.x;
+        const dy = state.player.y - enemy.y;
+        const distance = Math.abs(dx) + Math.abs(dy);
+        const enemyDef = ENEMY_TYPES[enemy.type];
+        if (distance === 1) {
+          state.hp -= enemyDef.damage;
+          latestEvent = `El ${enemyDef.name} te golpea por ${enemyDef.damage}.`;
+          if (state.hp <= 0) {
+            state.hp = 0;
+            state.over = true;
+            log('Has caído en la mazmorra. Pulsa “Nueva run”.');
+            render();
+            return;
+          }
+          continue;
+        }
+        const options = [];
+        if (Math.random() < enemyDef.chaseBias) {
+          if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) options.push({ x: enemy.x + Math.sign(dx), y: enemy.y });
+          if (dy !== 0) options.push({ x: enemy.x, y: enemy.y + Math.sign(dy) });
+          if (Math.abs(dx) < Math.abs(dy) && dx !== 0) options.push({ x: enemy.x + Math.sign(dx), y: enemy.y });
+        }
+        options.push({ x: enemy.x + (Math.random()<0.5?1:-1), y: enemy.y });
+        options.push({ x: enemy.x, y: enemy.y + (Math.random()<0.5?1:-1) });
+        const next = options.find(p => inside(p.x,p.y) && !state.walls.has(keyOf(p)) && !state.enemies.some(e => e !== enemy && eq(e,p)) && !eq(state.player,p) && (!state.potionPos || !eq(state.potionPos,p)) && !eq(state.exitPos,p) && (!state.keyPos || !eq(state.keyPos,p)));
+        if (next) { enemy.x = next.x; enemy.y = next.y; }
+      }
+      if (latestEvent) log(latestEvent);
+    }
+
+    function takeTurn(dir) {
+      if (state.over) return;
+      const consumedTurn = movePlayer(dir);
+      if (consumedTurn) enemyTurn();
+      updateUI();
+      render();
+      if (!state.over && !logEl.textContent) log('Tu turno.');
+    }
+
+    function waitTurn() {
+      if (state.over) return;
+      log('Esperas y observas.');
+      enemyTurn();
+      updateUI();
+      render();
+    }
+
+    function usePotion() {
+      if (state.over) return;
+      if (!state.potions) return log('No te quedan pociones.');
+      if (state.hp === state.maxHp) return log('Ya tienes la vida al máximo.');
+      state.potions -= 1;
+      state.hp = Math.min(state.maxHp, state.hp + 3);
+      log('Te curas 3 puntos de vida.');
+      updateUI(); render();
+    }
+
+    document.querySelectorAll('[data-dir]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dir = btn.dataset.dir;
+        const dirs = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
+        takeTurn(dirs[dir]);
+      });
+    });
+    document.getElementById('waitBtn').addEventListener('click', waitTurn);
+    document.getElementById('healBtn').addEventListener('click', usePotion);
+    document.getElementById('restartBtn').addEventListener('click', initRun);
+    window.addEventListener('keydown', e => {
+      const map = { ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0}, w:{x:0,y:-1}, s:{x:0,y:1}, a:{x:-1,y:0}, d:{x:1,y:0} };
+      if (map[e.key]) { e.preventDefault(); takeTurn(map[e.key]); }
+      if (e.key === ' ') { e.preventDefault(); waitTurn(); }
+    });
+
+    initRun();
+  </script>
+</body>
+</html>

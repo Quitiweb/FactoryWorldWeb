@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Neon Arena · Game Quitiweb</title>
+  <link rel="icon" href="./favicon.ico">
+  <style>
+    :root{--bg:#060815;--panel:#10172b;--line:#27406f;--text:#eef5ff;--muted:#9db1d8;--accent:#22d3ee;--accent2:#a855f7;--good:#34d399;--warn:#fbbf24;--bad:#fb7185}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at top,#181f4b,#060815 65%);color:var(--text);min-height:100vh;padding:14px}
+    .wrap{max-width:1180px;margin:0 auto}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.back{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#0e1630;color:#fff;text-decoration:none}.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}.card{background:linear-gradient(180deg,#131d36,#0d1528);border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:0 16px 34px rgba(0,0,0,.28)}
+    h1{margin:.15em 0}.muted{color:var(--muted)}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}.pill{background:#091223;border:1px solid #233a62;border-radius:14px;padding:10px}.pill strong{display:block;font-size:1.3rem}.canvas-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid #22375f;background:radial-gradient(circle at top,#121936,#040711)}canvas{display:block;width:100%;height:auto;touch-action:none}.overlay{position:absolute;inset:0;pointer-events:none}.message{position:absolute;left:14px;right:14px;bottom:14px;padding:11px 12px;border-radius:14px;background:rgba(7,12,26,.72);backdrop-filter:blur(8px);border:1px solid rgba(138,167,255,.12);font-size:.95rem;color:#dce8ff}.flash{position:absolute;inset:0;opacity:0;transition:opacity .18s}
+    .side{display:grid;gap:12px}.panel{background:#091223;border:1px solid #233a62;border-radius:16px;padding:14px}.actions{display:grid;gap:8px}.btn{padding:13px 14px;border:none;border-radius:14px;background:linear-gradient(90deg,var(--accent2),var(--accent));color:#06111c;font-weight:800;cursor:pointer}.btn.alt{background:#0f1730;border:1px solid #31456f;color:#eef5ff}.btn:disabled{opacity:.55;cursor:not-allowed}.stats .row,.scores .row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #203556}.stats .row:last-child,.scores .row:last-child{border-bottom:0}.upgrades{display:grid;gap:8px;margin-top:10px}.upgrade{padding:12px;border-radius:14px;background:#0f1730;border:1px solid #31456f;color:#eef5ff;text-align:left;cursor:pointer}.upgrade strong{display:block;margin-bottom:4px}.touch-ui{display:none;grid-template-columns:140px 1fr;gap:12px;align-items:end;margin-top:12px}.stick-zone{position:relative;width:140px;height:140px;border-radius:50%;background:rgba(10,16,34,.82);border:1px solid #2d4777;touch-action:none}.stick-base{position:absolute;inset:18px;border-radius:50%;border:1px dashed rgba(140,177,255,.25)}.stick-knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:linear-gradient(180deg,#2dd4ff,#8b5cf6);box-shadow:0 0 28px rgba(54,208,255,.35)}.touch-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.touch-btn{padding:16px 12px;border-radius:16px;border:1px solid #324d80;background:#0f1730;color:#fff;text-align:center;font-weight:800;user-select:none}.touch-btn small{display:block;color:#a7bae0;font-weight:600;margin-top:4px}
+    ul{margin:.4em 0 0 1.1em;padding:0;line-height:1.55}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}.touch-ui{display:grid}}
+    @media(max-width:640px){body{padding:10px}.card{padding:11px;border-radius:18px}.hud{grid-template-columns:repeat(2,1fr)}.message{font-size:.9rem;padding:10px 11px}.touch-ui{grid-template-columns:120px 1fr}.stick-zone{width:120px;height:120px}.stick-knob{width:50px;height:50px;margin:-25px 0 0 -25px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="./index.html">← Galería</a>
+      <div class="muted">Survivor arcade · móvil y escritorio</div>
+    </div>
+    <div class="layout">
+      <section class="card">
+        <h1>Neon Arena</h1>
+        <p class="muted">Entra en la arena, sobrevive a oleadas y mejora el build sobre la marcha. Quería darle un punto de “survivor” rápido, vistoso y jugable también desde el móvil.</p>
+        <div class="hud">
+          <div class="pill"><span class="muted">Vida</span><strong id="hp">100</strong></div>
+          <div class="pill"><span class="muted">Nivel</span><strong id="level">1</strong></div>
+          <div class="pill"><span class="muted">Tiempo</span><strong id="time">0:00</strong></div>
+          <div class="pill"><span class="muted">Bajas</span><strong id="kills">0</strong></div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="game" width="920" height="560"></canvas>
+          <div class="overlay">
+            <div class="flash" id="flash"></div>
+            <div class="message" id="message">Muévete, deja que el arma dispare sola y recoge prismas para subir de nivel.</div>
+          </div>
+        </div>
+        <div class="touch-ui">
+          <div class="stick-zone" id="stickZone">
+            <div class="stick-base"></div>
+            <div class="stick-knob" id="stickKnob"></div>
+          </div>
+          <div class="touch-buttons">
+            <div class="touch-btn" id="dashBtn">DASH<small>espacio</small></div>
+            <div class="touch-btn" id="pulseBtn">PULSO<small>shift</small></div>
+          </div>
+        </div>
+      </section>
+      <aside class="side">
+        <div class="panel actions">
+          <button class="btn" id="startBtn">Empezar run</button>
+          <button class="btn alt" id="restartBtn">Reiniciar</button>
+        </div>
+        <div class="panel stats">
+          <strong>Build actual</strong>
+          <div class="row"><span>Daño</span><strong id="statDamage">18</strong></div>
+          <div class="row"><span>Cadencia</span><strong id="statFireRate">1.0/s</strong></div>
+          <div class="row"><span>Velocidad</span><strong id="statSpeed">1.0x</strong></div>
+          <div class="row"><span>Recarga dash</span><strong id="statDash">4.0s</strong></div>
+          <div class="row"><span>Pulso</span><strong id="statPulse">0</strong></div>
+        </div>
+        <div class="panel scores">
+          <strong>Mejores runs</strong>
+          <div class="row"><span>Tiempo</span><strong id="bestTime">0:00</strong></div>
+          <div class="row"><span>Bajas</span><strong id="bestKills">0</strong></div>
+          <div class="row"><span>Nivel</span><strong id="bestLevel">1</strong></div>
+        </div>
+        <div class="panel">
+          <strong>Cómo va</strong>
+          <ul>
+            <li><strong>WASD / flechas</strong> para moverte.</li>
+            <li><strong>Espacio</strong> hace dash y te salva de apuros.</li>
+            <li><strong>Shift</strong> lanza un pulso si lo has mejorado.</li>
+            <li>Al subir de nivel eliges 1 mejora entre 3.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <strong>Selección de mejora</strong>
+          <div class="upgrades" id="upgrades"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const ui = {
+      hp: document.getElementById('hp'), level: document.getElementById('level'), time: document.getElementById('time'), kills: document.getElementById('kills'), message: document.getElementById('message'),
+      statDamage: document.getElementById('statDamage'), statFireRate: document.getElementById('statFireRate'), statSpeed: document.getElementById('statSpeed'), statDash: document.getElementById('statDash'), statPulse: document.getElementById('statPulse'),
+      bestTime: document.getElementById('bestTime'), bestKills: document.getElementById('bestKills'), bestLevel: document.getElementById('bestLevel'), upgrades: document.getElementById('upgrades'), flash: document.getElementById('flash')
+    };
+
+    const keys = new Set();
+    const moveInput = { x:0, y:0 };
+    let state;
+    let lastTs = 0;
+    let running = false;
+    let pausedForUpgrade = false;
+    let touchVector = { x:0, y:0 };
+
+    const upgradePool = [
+      { id:'damage', title:'Sobrecarga', text:'+6 de daño por disparo.', apply:s=>{ s.damage += 6; } },
+      { id:'firerate', title:'Cadencia fría', text:'+15% velocidad de disparo.', apply:s=>{ s.fireCooldownBase *= 0.85; } },
+      { id:'speed', title:'Patines de neón', text:'+12% de velocidad.', apply:s=>{ s.moveSpeed *= 1.12; } },
+      { id:'maxhp', title:'Capa ablativa', text:'+18 vida máxima y cura parcial.', apply:s=>{ s.maxHp += 18; s.hp = Math.min(s.maxHp, s.hp + 18); } },
+      { id:'orbit', title:'Órbita extra', text:'+1 dron orbital de defensa.', apply:s=>{ s.orbitals += 1; } },
+      { id:'multishot', title:'Disparo doble', text:'A partir de ahora salen 2 proyectiles.', apply:s=>{ s.multishot = Math.min(4, s.multishot + 1); } },
+      { id:'dash', title:'Dash más corto', text:'-0.6s de recarga del dash.', apply:s=>{ s.dashCooldownBase = Math.max(1.8, s.dashCooldownBase - 0.6); } },
+      { id:'pulse', title:'Pulso iónico', text:'Desbloquea o mejora el pulso en área.', apply:s=>{ s.pulseLevel += 1; } },
+      { id:'magnet', title:'Imán prismático', text:'Recoges prismas desde más lejos.', apply:s=>{ s.pickupRadius += 18; } },
+    ];
+
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+    function lerp(a,b,t){ return a + (b-a) * t; }
+    function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+    function fmtTime(sec){ const m = Math.floor(sec/60); const s = Math.floor(sec%60); return `${m}:${String(s).padStart(2,'0')}`; }
+    function rand(min,max){ return Math.random() * (max-min) + min; }
+    function bestKey(name){ return `neonArena:${name}`; }
+
+    function loadBest(){
+      ui.bestTime.textContent = fmtTime(Number(localStorage.getItem(bestKey('time')) || 0));
+      ui.bestKills.textContent = Number(localStorage.getItem(bestKey('kills')) || 0).toLocaleString('es-ES');
+      ui.bestLevel.textContent = Number(localStorage.getItem(bestKey('level')) || 1).toLocaleString('es-ES');
+    }
+
+    function saveBest(){
+      const bestTime = Number(localStorage.getItem(bestKey('time')) || 0);
+      const bestKills = Number(localStorage.getItem(bestKey('kills')) || 0);
+      const bestLevel = Number(localStorage.getItem(bestKey('level')) || 1);
+      if(state.time > bestTime) localStorage.setItem(bestKey('time'), String(Math.floor(state.time)));
+      if(state.kills > bestKills) localStorage.setItem(bestKey('kills'), String(state.kills));
+      if(state.level > bestLevel) localStorage.setItem(bestKey('level'), String(state.level));
+      loadBest();
+    }
+
+    function xpNeeded(level){ return 12 + Math.floor(level * 5.5); }
+
+    function resetGame(){
+      state = {
+        player: { x: canvas.width/2, y: canvas.height/2, radius: 13, hue: 190 },
+        hp: 100, maxHp: 100, level: 1, xp: 0, xpNeed: xpNeeded(1), time: 0, kills: 0,
+        damage: 18, moveSpeed: 188, fireCooldownBase: 1, fireCooldown: 0, dashCooldownBase: 4, dashCooldown: 0, dashTime: 0,
+        pulseLevel: 0, pulseCooldown: 0, orbitals: 1, multishot: 1, pickupRadius: 46,
+        enemies: [], bullets: [], shards: [], particles: [], rings: [],
+        spawnTimer: 0.8, spawnEvery: 0.9, danger: 0, invuln: 0,
+      };
+      pausedForUpgrade = false;
+      running = false;
+      ui.message.textContent = 'Pulsa empezar. Al principio parece amable, luego deja de serlo.';
+      ui.upgrades.innerHTML = '<div class="muted">Sube de nivel durante la run para desbloquear elecciones.</div>';
+      updateHud();
+      render();
+    }
+
+    function updateHud(){
+      ui.hp.textContent = `${Math.max(0, Math.ceil(state.hp))}/${state.maxHp}`;
+      ui.level.textContent = state.level;
+      ui.time.textContent = fmtTime(state.time);
+      ui.kills.textContent = state.kills.toLocaleString('es-ES');
+      ui.statDamage.textContent = state.damage;
+      ui.statFireRate.textContent = `${(1/state.fireCooldownBase).toFixed(1)}/s`;
+      ui.statSpeed.textContent = `${(state.moveSpeed/188).toFixed(1)}x`;
+      ui.statDash.textContent = `${state.dashCooldownBase.toFixed(1)}s`;
+      ui.statPulse.textContent = state.pulseLevel ? `lvl ${state.pulseLevel}` : '0';
+    }
+
+    function startRun(){
+      if(state.hp <= 0) resetGame();
+      running = true;
+      pausedForUpgrade = false;
+      ui.message.textContent = 'Run activa. Muévete, kitea y no te dejes cerrar.';
+      lastTs = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function pickUpgradeChoices(){
+      const picked = [];
+      const copy = [...upgradePool];
+      while(picked.length < 3 && copy.length){
+        const index = Math.floor(Math.random() * copy.length);
+        picked.push(copy.splice(index,1)[0]);
+      }
+      return picked;
+    }
+
+    function showUpgradeSelection(){
+      pausedForUpgrade = true;
+      running = false;
+      ui.message.textContent = 'Subes de nivel. Elige una mejora para seguir vivo.';
+      const choices = pickUpgradeChoices();
+      ui.upgrades.innerHTML = '';
+      choices.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'upgrade';
+        btn.innerHTML = `<strong>${choice.title}</strong><span>${choice.text}</span>`;
+        btn.addEventListener('click', () => {
+          choice.apply(state);
+          pausedForUpgrade = false;
+          running = true;
+          ui.message.textContent = `Mejora aplicada: ${choice.title}. Sigue la carnicería.`;
+          ui.upgrades.innerHTML = '<div class="muted">Esperando a la siguiente subida de nivel…</div>';
+          updateHud();
+          lastTs = performance.now();
+          requestAnimationFrame(loop);
+        }, { once:true });
+        ui.upgrades.appendChild(btn);
+      });
+    }
+
+    function spawnEnemy(){
+      const side = Math.floor(Math.random() * 4);
+      const pad = 40;
+      const pos = [
+        { x: rand(0, canvas.width), y: -pad },
+        { x: canvas.width + pad, y: rand(0, canvas.height) },
+        { x: rand(0, canvas.width), y: canvas.height + pad },
+        { x: -pad, y: rand(0, canvas.height) },
+      ][side];
+      const elite = Math.random() < Math.min(0.22, state.time / 140);
+      const sprinter = !elite && Math.random() < Math.min(0.3, state.time / 110);
+      state.enemies.push({
+        x: pos.x, y: pos.y,
+        radius: elite ? 16 : sprinter ? 10 : 12,
+        hp: elite ? 64 + state.time * 0.6 : sprinter ? 18 + state.time * 0.22 : 28 + state.time * 0.35,
+        maxHp: elite ? 64 + state.time * 0.6 : sprinter ? 18 + state.time * 0.22 : 28 + state.time * 0.35,
+        speed: elite ? 68 + state.time * 0.08 : sprinter ? 118 + state.time * 0.16 : 82 + state.time * 0.12,
+        damage: elite ? 18 : sprinter ? 8 : 11,
+        type: elite ? 'elite' : sprinter ? 'sprinter' : 'drone',
+        slow: 0,
+      });
+    }
+
+    function emitBurst(x,y,hue,count=10){
+      for(let i=0;i<count;i++){
+        const angle = Math.random() * Math.PI * 2;
+        const speed = rand(35, 180);
+        state.particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, life: rand(.25,.7), hue, size: rand(2,5) });
+      }
+    }
+
+    function nearestEnemy(){
+      let best = null, bestD = Infinity;
+      for(const enemy of state.enemies){
+        const d = dist(state.player, enemy);
+        if(d < bestD){ bestD = d; best = enemy; }
+      }
+      return best;
+    }
+
+    function shootAt(target){
+      if(!target) return;
+      const baseAngle = Math.atan2(target.y - state.player.y, target.x - state.player.x);
+      const shots = state.multishot;
+      for(let i=0;i<shots;i++){
+        const spread = shots === 1 ? 0 : lerp(-0.24, 0.24, i/(shots-1));
+        const angle = baseAngle + spread;
+        state.bullets.push({ x: state.player.x, y: state.player.y, vx: Math.cos(angle)*360, vy: Math.sin(angle)*360, life: 1.05, radius: 4, damage: state.damage });
+      }
+      emitBurst(state.player.x, state.player.y, 190, 4);
+    }
+
+    function castPulse(){
+      if(state.pulseLevel <= 0 || state.pulseCooldown > 0 || state.hp <= 0) return;
+      state.pulseCooldown = Math.max(7.5 - state.pulseLevel * 1.1, 3.5);
+      const radius = 90 + state.pulseLevel * 24;
+      const damage = 18 + state.pulseLevel * 12;
+      state.rings.push({ x: state.player.x, y: state.player.y, radius: 10, max: radius, life: 0.45, hue: 178 });
+      state.enemies.forEach(enemy => {
+        const d = dist(state.player, enemy);
+        if(d <= radius){ enemy.hp -= damage; enemy.slow = 1.2; }
+      });
+      emitBurst(state.player.x, state.player.y, 175, 18);
+      ui.message.textContent = 'Pulso iónico lanzado.';
+    }
+
+    function gainXp(amount){
+      state.xp += amount;
+      while(state.xp >= state.xpNeed){
+        state.xp -= state.xpNeed;
+        state.level += 1;
+        state.xpNeed = xpNeeded(state.level);
+        updateHud();
+        showUpgradeSelection();
+        break;
+      }
+    }
+
+    function killEnemy(enemyIndex){
+      const enemy = state.enemies[enemyIndex];
+      state.kills += 1;
+      emitBurst(enemy.x, enemy.y, enemy.type === 'elite' ? 320 : enemy.type === 'sprinter' ? 35 : 190, enemy.type === 'elite' ? 18 : 10);
+      const shardCount = enemy.type === 'elite' ? 5 : 2;
+      for(let i=0;i<shardCount;i++){
+        state.shards.push({ x: enemy.x + rand(-10,10), y: enemy.y + rand(-10,10), value: enemy.type === 'elite' ? 3 : 1, radius: 6, hue: enemy.type === 'elite' ? 48 : 190 });
+      }
+      state.enemies.splice(enemyIndex, 1);
+      gainXp(enemy.type === 'elite' ? 5 : enemy.type === 'sprinter' ? 2 : 1);
+    }
+
+    function hitPlayer(amount){
+      if(state.invuln > 0) return;
+      state.hp -= amount;
+      state.invuln = 0.55;
+      ui.flash.style.background = 'rgba(251,113,133,.18)';
+      ui.flash.style.opacity = '1';
+      setTimeout(() => ui.flash.style.opacity = '0', 90);
+      if(state.hp <= 0){
+        state.hp = 0;
+        running = false;
+        pausedForUpgrade = false;
+        ui.message.textContent = `Has caído. Run final: ${fmtTime(state.time)}, ${state.kills} bajas, nivel ${state.level}.`;
+        saveBest();
+      }
+    }
+
+    function update(dt){
+      state.time += dt;
+      state.spawnEvery = Math.max(0.25, 0.9 - state.time * 0.0032);
+      state.spawnTimer -= dt;
+      while(state.spawnTimer <= 0){
+        spawnEnemy();
+        state.spawnTimer += state.spawnEvery;
+        if(state.time > 45 && Math.random() < 0.2) state.spawnTimer -= 0.08;
+      }
+
+      const rawX = (keys.has('ArrowRight') || keys.has('d') ? 1 : 0) - (keys.has('ArrowLeft') || keys.has('a') ? 1 : 0) + touchVector.x;
+      const rawY = (keys.has('ArrowDown') || keys.has('s') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('w') ? 1 : 0) + touchVector.y;
+      const len = Math.hypot(rawX, rawY) || 1;
+      moveInput.x = clamp(rawX / len, -1, 1);
+      moveInput.y = clamp(rawY / len, -1, 1);
+
+      const dashMul = state.dashTime > 0 ? 2.6 : 1;
+      state.player.x = clamp(state.player.x + moveInput.x * state.moveSpeed * dashMul * dt, 24, canvas.width - 24);
+      state.player.y = clamp(state.player.y + moveInput.y * state.moveSpeed * dashMul * dt, 24, canvas.height - 24);
+      state.dashTime = Math.max(0, state.dashTime - dt);
+      state.dashCooldown = Math.max(0, state.dashCooldown - dt);
+      state.pulseCooldown = Math.max(0, state.pulseCooldown - dt);
+      state.invuln = Math.max(0, state.invuln - dt);
+
+      state.fireCooldown -= dt;
+      if(state.fireCooldown <= 0){
+        shootAt(nearestEnemy());
+        state.fireCooldown = state.fireCooldownBase;
+      }
+
+      for(const enemy of state.enemies){
+        const dx = state.player.x - enemy.x;
+        const dy = state.player.y - enemy.y;
+        const d = Math.hypot(dx, dy) || 1;
+        const speed = enemy.speed * (enemy.slow > 0 ? 0.6 : 1);
+        enemy.x += dx / d * speed * dt;
+        enemy.y += dy / d * speed * dt;
+        enemy.slow = Math.max(0, enemy.slow - dt);
+      }
+
+      for(let i=state.bullets.length-1;i>=0;i--){
+        const b = state.bullets[i];
+        b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+        if(b.life <= 0 || b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20){ state.bullets.splice(i,1); continue; }
+        let removed = false;
+        for(let j=state.enemies.length-1;j>=0;j--){
+          const e = state.enemies[j];
+          if(Math.hypot(b.x-e.x,b.y-e.y) < b.radius + e.radius){
+            e.hp -= b.damage;
+            emitBurst(b.x, b.y, 194, 3);
+            state.bullets.splice(i,1);
+            removed = true;
+            if(e.hp <= 0) killEnemy(j);
+            break;
+          }
+        }
+        if(removed) continue;
+      }
+
+      for(let i=state.enemies.length-1;i>=0;i--){
+        const e = state.enemies[i];
+        if(Math.hypot(e.x-state.player.x,e.y-state.player.y) < e.radius + state.player.radius + 2){
+          hitPlayer(e.damage);
+          const angle = Math.atan2(e.y-state.player.y, e.x-state.player.x);
+          e.x += Math.cos(angle) * 18;
+          e.y += Math.sin(angle) * 18;
+        }
+      }
+
+      for(let o=0;o<state.orbitals;o++){
+        const angle = state.time * (1.5 + o * 0.15) + (Math.PI * 2 / state.orbitals) * o;
+        const ox = state.player.x + Math.cos(angle) * 38;
+        const oy = state.player.y + Math.sin(angle) * 38;
+        for(let j=state.enemies.length-1;j>=0;j--){
+          const e = state.enemies[j];
+          if(Math.hypot(ox-e.x,oy-e.y) < e.radius + 8){
+            e.hp -= 14 * dt * 5;
+            if(e.hp <= 0) killEnemy(j);
+          }
+        }
+      }
+
+      for(const shard of state.shards){
+        const d = Math.hypot(shard.x-state.player.x, shard.y-state.player.y);
+        if(d < state.pickupRadius){
+          const pull = clamp(260 / Math.max(30,d), 0.6, 3.2);
+          shard.x += (state.player.x - shard.x) * dt * pull * 3;
+          shard.y += (state.player.y - shard.y) * dt * pull * 3;
+        }
+      }
+      for(let i=state.shards.length-1;i>=0;i--){
+        const s = state.shards[i];
+        if(Math.hypot(s.x-state.player.x,s.y-state.player.y) < s.radius + state.player.radius + 4){
+          gainXp(s.value);
+          state.shards.splice(i,1);
+          continue;
+        }
+      }
+
+      state.particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+      state.particles = state.particles.filter(p => p.life > 0);
+      state.rings.forEach(r => { r.life -= dt; r.radius = lerp(r.max, 10, Math.max(0, r.life/0.45)); });
+      state.rings = state.rings.filter(r => r.life > 0);
+      updateHud();
+    }
+
+    function drawArena(){
+      const g = ctx.createLinearGradient(0,0,0,canvas.height);
+      g.addColorStop(0,'#0a0f22'); g.addColorStop(1,'#050711');
+      ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.save(); ctx.translate(canvas.width/2, canvas.height/2);
+      const spin = state.time * 0.08;
+      for(let r=60;r<480;r+=54){
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${(200 + r*0.22 + state.time*8)%360},100%,60%,${0.06 + r/9000})`;
+        ctx.lineWidth = r % 108 === 0 ? 2 : 1;
+        for(let i=0;i<6;i++){
+          const a = spin + Math.PI*2/6*i;
+          const x = Math.cos(a)*r;
+          const y = Math.sin(a)*r*0.62;
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function render(){
+      drawArena();
+
+      for(const ring of state.rings){
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${ring.hue},100%,68%,${ring.life*1.8})`;
+        ctx.lineWidth = 4;
+        ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI*2);
+        ctx.stroke();
+      }
+
+      state.shards.forEach(s => {
+        ctx.save(); ctx.translate(s.x,s.y); ctx.rotate(state.time*2);
+        ctx.fillStyle = `hsla(${s.hue},100%,62%,0.95)`;
+        ctx.beginPath();
+        for(let i=0;i<4;i++){
+          const a = Math.PI/2 * i;
+          const rr = i % 2 === 0 ? 8 : 4;
+          const x = Math.cos(a)*rr; const y = Math.sin(a)*rr;
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.closePath(); ctx.fill(); ctx.restore();
+      });
+
+      state.bullets.forEach(b => {
+        ctx.beginPath();
+        ctx.fillStyle = '#7cf9ff';
+        ctx.shadowColor = '#53efff'; ctx.shadowBlur = 16;
+        ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);
+        ctx.fill(); ctx.shadowBlur = 0;
+      });
+
+      state.enemies.forEach(e => {
+        const hue = e.type === 'elite' ? 320 : e.type === 'sprinter' ? 38 : 188;
+        ctx.beginPath();
+        ctx.fillStyle = `hsl(${hue} 95% 58%)`;
+        ctx.shadowColor = `hsla(${hue},100%,60%,0.55)`; ctx.shadowBlur = 24;
+        ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(8,12,24,.8)';
+        ctx.fillRect(e.x-e.radius, e.y-e.radius-10, e.radius*2, 4);
+        ctx.fillStyle = e.type === 'elite' ? '#f9a8d4' : e.type === 'sprinter' ? '#fde68a' : '#a5f3fc';
+        ctx.fillRect(e.x-e.radius, e.y-e.radius-10, (e.hp/e.maxHp)*e.radius*2, 4);
+      });
+
+      for(let o=0;o<state.orbitals;o++){
+        const angle = state.time * (1.5 + o * 0.15) + (Math.PI * 2 / state.orbitals) * o;
+        const ox = state.player.x + Math.cos(angle) * 38;
+        const oy = state.player.y + Math.sin(angle) * 38;
+        ctx.beginPath();
+        ctx.fillStyle = '#f0abfc';
+        ctx.shadowColor = '#d946ef'; ctx.shadowBlur = 20;
+        ctx.arc(ox,oy,8,0,Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+      }
+
+      state.particles.forEach(p => {
+        ctx.beginPath();
+        ctx.fillStyle = `hsla(${p.hue},100%,70%,${p.life})`;
+        ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+        ctx.fill();
+      });
+
+      ctx.beginPath();
+      ctx.fillStyle = state.invuln > 0 ? '#fda4af' : '#67e8f9';
+      ctx.shadowColor = state.invuln > 0 ? '#fb7185' : '#22d3ee'; ctx.shadowBlur = 28;
+      ctx.arc(state.player.x, state.player.y, state.player.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2;
+      ctx.arc(state.player.x, state.player.y, state.pickupRadius, 0, Math.PI*2); ctx.stroke();
+
+      const xpW = canvas.width - 28;
+      ctx.fillStyle = 'rgba(7,12,24,.82)'; ctx.fillRect(14, 14, xpW, 10);
+      const xpRatio = state.xpNeed ? state.xp / state.xpNeed : 0;
+      const xpGrad = ctx.createLinearGradient(14,0,14+xpW,0);
+      xpGrad.addColorStop(0,'#8b5cf6'); xpGrad.addColorStop(1,'#22d3ee');
+      ctx.fillStyle = xpGrad; ctx.fillRect(14, 14, xpW * xpRatio, 10);
+      ctx.strokeStyle = 'rgba(160,185,255,.18)'; ctx.strokeRect(14,14,xpW,10);
+
+      if(!running && !pausedForUpgrade && state.hp > 0){
+        ctx.fillStyle = 'rgba(4,8,18,.55)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#eef5ff'; ctx.font = '700 34px system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Neon Arena', canvas.width/2, canvas.height/2 - 12);
+        ctx.font = '500 18px system-ui, sans-serif';
+        ctx.fillStyle = '#a7bae0';
+        ctx.fillText('Pulsa empezar cuando quieras entrar en la arena.', canvas.width/2, canvas.height/2 + 24);
+      }
+    }
+
+    function loop(ts){
+      if(!running || pausedForUpgrade || state.hp <= 0) return render();
+      const dt = Math.min(0.033, (ts - lastTs) / 1000 || 0.016);
+      lastTs = ts;
+      update(dt);
+      render();
+      if(running) requestAnimationFrame(loop);
+    }
+
+    function dash(){
+      if(state.dashCooldown > 0 || state.hp <= 0) return;
+      state.dashCooldown = state.dashCooldownBase;
+      state.dashTime = 0.18;
+      state.invuln = Math.max(state.invuln, 0.18);
+      emitBurst(state.player.x, state.player.y, 280, 16);
+      ui.message.textContent = 'Dash.';
+    }
+
+    document.addEventListener('keydown', e => {
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      keys.add(key);
+      if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+      if(e.key === ' ') dash();
+      if(e.key === 'Shift') castPulse();
+    });
+    document.addEventListener('keyup', e => {
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      keys.delete(key);
+    });
+
+    document.getElementById('startBtn').addEventListener('click', startRun);
+    document.getElementById('restartBtn').addEventListener('click', () => { resetGame(); render(); });
+    document.getElementById('dashBtn').addEventListener('pointerdown', e => { e.preventDefault(); dash(); });
+    document.getElementById('pulseBtn').addEventListener('pointerdown', e => { e.preventDefault(); castPulse(); });
+
+    const stickZone = document.getElementById('stickZone');
+    const stickKnob = document.getElementById('stickKnob');
+    let stickActive = false;
+    function updateStick(clientX, clientY){
+      const rect = stickZone.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      let dx = clientX - cx; let dy = clientY - cy;
+      const max = rect.width * 0.28;
+      const len = Math.hypot(dx, dy);
+      if(len > max){ dx = dx/len*max; dy = dy/len*max; }
+      touchVector.x = dx / max;
+      touchVector.y = dy / max;
+      stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    }
+    function resetStick(){ touchVector.x = 0; touchVector.y = 0; stickKnob.style.transform = 'translate(0,0)'; }
+    stickZone.addEventListener('pointerdown', e => { stickActive = true; stickZone.setPointerCapture(e.pointerId); updateStick(e.clientX, e.clientY); });
+    stickZone.addEventListener('pointermove', e => { if(stickActive) updateStick(e.clientX, e.clientY); });
+    stickZone.addEventListener('pointerup', () => { stickActive = false; resetStick(); });
+    stickZone.addEventListener('pointercancel', () => { stickActive = false; resetStick(); });
+
+    loadBest();
+    resetGame();
+  </script>
+</body>
+</html>
