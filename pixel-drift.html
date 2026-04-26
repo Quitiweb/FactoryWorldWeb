@@ -7,14 +7,14 @@
   <link rel="icon" href="./favicon.ico">
   <style>
     :root{--bg:#070b16;--panel:#11192e;--line:#2c416d;--text:#eef6ff;--muted:#9fb2d7;--accent:#22d3ee;--accent2:#8b5cf6;--good:#34d399;--gold:#fbbf24;--bad:#fb7185}
-    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at top,#172a4d,#070b16 65%);color:var(--text);min-height:100vh;padding:16px}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at top,#172a4d,#070b16 65%);color:var(--text);min-height:100vh;padding:16px;overscroll-behavior:none}
     .wrap{max-width:1180px;margin:0 auto}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.back{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#0f1730;color:#fff;text-decoration:none}.layout{display:grid;grid-template-columns:1fr 320px;gap:16px}.card{background:linear-gradient(180deg,#13203b,#0f1730);border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:0 16px 34px rgba(0,0,0,.25)}
     h1{margin:.15em 0}.muted{color:var(--muted)}
-    .game-shell{position:relative}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}.pill{background:#0b1428;border:1px solid #2a4068;border-radius:14px;padding:10px}.pill strong{display:block;font-size:1.35rem}.canvas-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid #22375e;background:#050814}.overlay{position:absolute;inset:0;pointer-events:none}.message{position:absolute;left:16px;bottom:16px;max-width:60%;padding:10px 12px;border-radius:12px;background:rgba(8,13,26,.62);backdrop-filter:blur(6px);color:#dce8ff;font-size:.95rem}
+    .game-shell{position:relative}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}.pill{background:#0b1428;border:1px solid #2a4068;border-radius:14px;padding:10px}.pill strong{display:block;font-size:1.35rem}.canvas-wrap{position:relative;border-radius:18px;overflow:hidden;border:1px solid #22375e;background:#050814;touch-action:none}.overlay{position:absolute;inset:0;pointer-events:none}.message{position:absolute;left:16px;bottom:16px;max-width:60%;padding:10px 12px;border-radius:12px;background:rgba(8,13,26,.62);backdrop-filter:blur(6px);color:#dce8ff;font-size:.95rem}.steerpad{display:none;position:absolute;left:0;right:0;bottom:0;height:38%;pointer-events:none}.steer-half{position:absolute;top:0;bottom:0;width:50%;pointer-events:auto;display:flex;align-items:flex-end;justify-content:center;padding-bottom:14px;color:rgba(238,246,255,.85);font-weight:800;letter-spacing:.08em;text-shadow:0 0 10px rgba(0,0,0,.4);touch-action:none;user-select:none}.steer-half.left{left:0;background:linear-gradient(90deg,rgba(124,58,237,.22),rgba(124,58,237,0))}.steer-half.right{right:0;background:linear-gradient(270deg,rgba(34,211,238,.22),rgba(34,211,238,0))}
     canvas{display:block;width:100%;height:auto;touch-action:none;background:linear-gradient(180deg,#081120,#050814)}
-    .side{display:grid;gap:12px}.log,.mode,.controls,.scores{background:#0b1428;border:1px solid #2a4068;border-radius:16px;padding:14px}.log{min-height:116px;line-height:1.55}.buttons{display:grid;gap:8px}.btn{padding:13px 14px;border:none;border-radius:14px;background:linear-gradient(90deg,var(--accent2),var(--accent));color:#06111c;font-weight:800;cursor:pointer}.btn.alt{background:#10192f;color:#eef6ff;border:1px solid #31456f}.toggle{display:flex;gap:8px;flex-wrap:wrap}.toggle button{flex:1}.touches{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.touch{padding:16px;border-radius:14px;border:1px solid #31456f;background:#0f1730;color:#eef6ff;text-align:center;font-weight:800;user-select:none}
+    .side{display:grid;gap:12px}.log,.mode,.controls,.scores{background:#0b1428;border:1px solid #2a4068;border-radius:16px;padding:14px}.log{min-height:116px;line-height:1.55}.buttons{display:grid;gap:8px}.btn{padding:13px 14px;border:none;border-radius:14px;background:linear-gradient(90deg,var(--accent2),var(--accent));color:#06111c;font-weight:800;cursor:pointer;touch-action:manipulation}.btn.alt{background:#10192f;color:#eef6ff;border:1px solid #31456f}.toggle{display:flex;gap:8px;flex-wrap:wrap}.toggle button{flex:1}.touches{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.touch{padding:16px;border-radius:14px;border:1px solid #31456f;background:#0f1730;color:#eef6ff;text-align:center;font-weight:800;user-select:none;touch-action:none}
     ul{margin:.4em 0 0 1.1em;padding:0}.score-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #22375e}.score-line:last-child{border-bottom:0}
-    @media(max-width:980px){.layout{grid-template-columns:1fr}.touches{display:grid}.message{max-width:82%}}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}.touches{display:grid}.steerpad{display:block}.message{max-width:82%}}
     @media(max-width:640px){body{padding:10px}.card{padding:12px;border-radius:18px}.hud{grid-template-columns:repeat(2,1fr)}.message{font-size:.9rem;left:10px;right:10px;max-width:none}.top{margin-bottom:10px}}
   </style>
 </head>
@@ -38,6 +38,10 @@
           <canvas id="game" width="900" height="560"></canvas>
           <div class="overlay">
             <div class="message" id="message">Modo diario: la carretera cambia cada día. Pulsa jugar y déjate llevar.</div>
+          </div>
+          <div class="steerpad">
+            <div class="steer-half left" id="steerLeft">IZQ</div>
+            <div class="steer-half right" id="steerRight">DER</div>
           </div>
         </div>
         <div class="touches">
@@ -380,24 +384,58 @@
       requestAnimationFrame(loop);
     }
 
+    function clearInput(){
+      input.left = false;
+      input.right = false;
+    }
+
     function start(){
+      clearInput();
       initState();
       running = true;
       lastTs = performance.now();
       ui.message.textContent = mode==='daily' ? 'Reto diario activo. Las primeras curvas siempre engañan.' : 'Endless activo. Busca el trance perfecto.';
     }
 
+    function bindHoldControl(el, side){
+      const setState = active => {
+        input[side] = active;
+        input[side === 'left' ? 'right' : 'left'] = active ? false : input[side === 'left' ? 'right' : 'left'];
+      };
+      el.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        setState(true);
+        if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+      });
+      ['pointerup','pointercancel','lostpointercapture','pointerleave'].forEach(evt => {
+        el.addEventListener(evt, e => {
+          e.preventDefault();
+          setState(false);
+        });
+      });
+    }
+
     document.getElementById('startBtn').addEventListener('click', start);
     document.getElementById('restartBtn').addEventListener('click', start);
     document.getElementById('dailyBtn').addEventListener('click', ()=> setMode('daily'));
     document.getElementById('endlessBtn').addEventListener('click', ()=> setMode('endless'));
-    window.addEventListener('keydown', e => { if(e.key==='ArrowLeft' || e.key==='a') input.left = true; if(e.key==='ArrowRight' || e.key==='d') input.right = true; });
-    window.addEventListener('keyup', e => { if(e.key==='ArrowLeft' || e.key==='a') input.left = false; if(e.key==='ArrowRight' || e.key==='d') input.right = false; });
-    const tl = document.getElementById('touchLeft'), tr = document.getElementById('touchRight');
-    [['pointerdown',true],['pointerup',false],['pointercancel',false],['pointerleave',false]].forEach(([evt,val])=>{
-      tl.addEventListener(evt, e => { e.preventDefault(); input.left = val; if(!val && evt!=='pointerdown') return; });
-      tr.addEventListener(evt, e => { e.preventDefault(); input.right = val; if(!val && evt!=='pointerdown') return; });
+    window.addEventListener('keydown', e => {
+      if(e.key==='ArrowLeft' || e.key==='a') input.left = true;
+      if(e.key==='ArrowRight' || e.key==='d') input.right = true;
     });
+    window.addEventListener('keyup', e => {
+      if(e.key==='ArrowLeft' || e.key==='a') input.left = false;
+      if(e.key==='ArrowRight' || e.key==='d') input.right = false;
+    });
+    window.addEventListener('blur', clearInput);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) clearInput(); });
+
+    const tl = document.getElementById('touchLeft'), tr = document.getElementById('touchRight');
+    const sl = document.getElementById('steerLeft'), sr = document.getElementById('steerRight');
+    bindHoldControl(tl, 'left');
+    bindHoldControl(tr, 'right');
+    bindHoldControl(sl, 'left');
+    bindHoldControl(sr, 'right');
 
     updateBestUI();
     setMode('daily');
